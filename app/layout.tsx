@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Suspense } from "react";
+import { Loading } from "@/components/common/LoadingComponent";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -65,7 +67,7 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
-                {children}
+                <Suspense fallback={<Loading />}>{children}</Suspense>
             </body>
         </html>
     );
