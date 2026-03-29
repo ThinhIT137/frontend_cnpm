@@ -1,4 +1,4 @@
-import { UserResponseProps } from "../UserResponseProps";
+import { UserResponseProps } from "./UserResponseProps";
 
 export type AuthResponseProps = {
     accessToken: string;
