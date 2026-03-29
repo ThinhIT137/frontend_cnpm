@@ -1,4 +1,4 @@
-export type TouristAreaImageProps = {
+export type ImageProps = {
     id: number;
     url?: string;
     isCover: boolean;

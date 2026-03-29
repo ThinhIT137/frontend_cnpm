@@ -1,23 +1,25 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./login.scss";
 
 import { useRouter } from "next/navigation";
 import { isAccessTokenValid } from "@/libs/hooks/isAccessTokenValid";
 import { SignIn } from "@/components/common/forms/auth/SignInForm";
 import { CreateAccount } from "@/components/common/forms/auth/CreateAccountForm";
-import { Loading } from "@/components/common/LoadingComponent";
 import { loginApi } from "@/app/api/auth/loginApi";
 import { registerApi } from "@/app/api/auth/registerApi";
 import { forgotApi } from "@/app/api/auth/forgotApi";
 import { ForgotPassword } from "@/components/common/forms/auth/ForgotPasswordForm";
 import { togglePasswordVisibility } from "@/libs/hooks/togglePasswordVisibility";
+import { useLoading } from "@/context/LoadingContext";
+import { useAuth } from "@/context/AuthContext";
+import { setAuthMessage } from "@/constants/systemMessager";
 
 const login = () => {
     const router = useRouter();
-    const [loading, setloading] = useState(false);
-
+    const { setLoading } = useLoading();
+    const { setAuth } = useAuth();
     // login
     const [EmailLogin, setEmailLogin] = useState("");
     const [PasswordLogin, setPasswordLogin] = useState("");
@@ -46,15 +48,17 @@ const login = () => {
             alert("Đằng nhập thất bại (Không được để trống)");
             return;
         }
-
         try {
-            setloading(true);
+            setLoading(true);
             await loginApi({ email: EmailLogin, password: PasswordLogin });
+            setAuthMessage("login");
+            setAuth(true);
             router.push("/");
         } catch (err) {
             console.log(err);
-            setloading(false);
             alert("Lỗi");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -75,19 +79,19 @@ const login = () => {
             return;
         }
         try {
-            setloading(true);
+            setLoading(true);
             await registerApi({
                 Name: firstName + " " + secondName,
                 Email: EmailRegister,
                 PasswordHash: PasswordRegister,
             });
+            setAuth(true);
             router.push("/");
         } catch (err) {
             console.log(err);
-            setloading(false);
             alert("Lỗi");
         } finally {
-            setloading(false);
+            setLoading(false);
         }
     };
     // forgot
@@ -97,13 +101,13 @@ const login = () => {
             return;
         }
         try {
-            setloading(true);
+            setLoading(true);
             const res = await forgotApi(EmailForgot);
             setResForgot(res.data.message);
         } catch (err) {
             console.log(err);
         } finally {
-            setloading(false);
+            setLoading(false);
         }
 
         setTimeout(() => {
@@ -177,8 +181,6 @@ const login = () => {
                     )}
                 </div>
             </div>
-
-            {loading && <Loading />}
         </>
     );
 };

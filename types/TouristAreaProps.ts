@@ -1,4 +1,4 @@
-import { TouristAreaImageProps } from "../TouristAreaImageProps";
+import { ImageProps } from "./ImageProps";
 
 export type TouristAreaProps = {
     id: number;
@@ -13,6 +13,6 @@ export type TouristAreaProps = {
     latitude: number;
     longitude: number;
     type: string; // Cái này gán cứng "tourist_area" từ backend
-    images: TouristAreaImageProps[]; // Hứng nguyên mảng ảnh
+    images: ImageProps[]; // Hứng nguyên mảng ảnh
     coverImageUrl?: string; // Dùng dấu ? vì lỡ khu đó chưa có ảnh bìa thì nó có thể bị null/undefined
 };

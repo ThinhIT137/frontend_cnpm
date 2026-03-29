@@ -10,7 +10,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLocationDot } from "@fortawesome/free-solid-svg-icons";
 import { MapViewProps } from "@/types/MapViewProps";
 
-const MapView = ({ locations, selectedLocation }: MapViewProps) => {
+const MapView = ({
+    locations,
+    selectedLocation,
+    LocaltionSetView,
+    size,
+}: MapViewProps) => {
     // Tạo 2 cái thẻ quản lý DOM để không cho React nhúng tay vào
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<L.Map | null>(null);
@@ -21,17 +26,37 @@ const MapView = ({ locations, selectedLocation }: MapViewProps) => {
         if (typeof window === "undefined" || !mapContainerRef.current) return;
         // 1. Chỉ khởi tạo bản đồ 1 lần duy nhất, cấm render lại
         if (!mapInstanceRef.current) {
-            // L.map sẽ tự động dán bản đồ vào thẻ div
-            mapInstanceRef.current = L.map(mapContainerRef.current, {
-                zoomSnap: 0.1,
-                zoomDelta: 0.1,
-            }).setView([15.8, 105.8], 5.8);
-            L.tileLayer(
+            const ggStandard = L.tileLayer(
                 "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=vi",
                 {
                     attribution: "© Google Maps",
                 },
-            ).addTo(mapInstanceRef.current);
+            );
+            const ggSatellite = L.tileLayer(
+                "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}&hl=vi",
+                {
+                    attribution: "© Google Maps (Vệ tinh)",
+                },
+            );
+            const ggHybrid = L.tileLayer(
+                "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&hl=vi",
+                {
+                    attribution: "© Google Maps (Lai)",
+                },
+            );
+
+            // L.map sẽ tự động dán bản đồ vào thẻ div
+            mapInstanceRef.current = L.map(mapContainerRef.current, {
+                zoomSnap: 0.1,
+                zoomDelta: 0.1,
+                layers: [ggStandard],
+            }).setView(LocaltionSetView, size);
+            const baseMaps = {
+                "Bản đồ chuẩn": ggStandard,
+                "Vệ tinh (Có nhãn đường)": ggHybrid,
+                "Vệ tinh (Trơn)": ggSatellite,
+            };
+            L.control.layers(baseMaps).addTo(mapInstanceRef.current);
             // Tạo một cái rổ để chứa các cục Marker
             markersLayerRef.current = L.layerGroup().addTo(
                 mapInstanceRef.current,

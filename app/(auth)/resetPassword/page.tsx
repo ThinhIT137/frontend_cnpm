@@ -7,11 +7,14 @@ import { togglePasswordVisibility } from "@/libs/hooks/togglePasswordVisibility"
 import { ResetPassword } from "@/components/common/forms/auth/ResetPasswordForm";
 import { resetPasswordApi } from "@/app/api/auth/resetPasswordApi";
 import { Loading } from "@/components/common/LoadingComponent";
+import { useAuth } from "@/context/AuthContext";
+import { useLoading } from "@/context/LoadingContext";
 
 const resetPasswordPage = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const [loading, setLoading] = useState(false);
+    const { setLoading } = useLoading();
+    const { setAuth } = useAuth();
 
     const email = searchParams.get("email");
     const token = searchParams.get("token");
@@ -52,6 +55,7 @@ const resetPasswordPage = () => {
                 Token: String(token),
                 Expired: new Date(),
             });
+            setAuth(true);
             router.push("/");
         } catch (err) {
             console.log(err);
@@ -82,7 +86,6 @@ const resetPasswordPage = () => {
                     />
                 </div>
             </div>
-            {loading && <Loading />}
         </>
     );
 };

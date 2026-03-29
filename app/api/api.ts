@@ -2,8 +2,8 @@ import axios from "axios";
 import { addToken } from "../../libs/hooks/authLogin";
 import { config } from "process";
 import { error } from "console";
+import { removeLocalStorage } from "@/libs/hooks/removeLocalStorage";
 // import { useRouter } from "next/navigation";
-
 let isRefreshing = false;
 let pendingRequests: any[] = [];
 const authChannel =
@@ -38,11 +38,9 @@ export const api = axios.create({
 api.interceptors.request.use(
     (config) => {
         const accessToken = localStorage.getItem("accessToken");
-
         if (accessToken) {
             config.headers.Authorization = `Bearer ${accessToken}`;
         }
-
         return config;
     },
     (error) => {
@@ -100,12 +98,9 @@ api.interceptors.response.use(
                 if (authChannel) {
                     authChannel.postMessage({ type: "LOGOUT" });
                 }
-
                 pendingRequests.forEach((callback) => callback(null));
                 pendingRequests = [];
-
-                localStorage.removeItem("accessToken");
-                localStorage.removeItem("accessTokenExpiresAt");
+                removeLocalStorage();
                 window.location.href = "/login";
                 return Promise.reject(refreshError);
             } finally {

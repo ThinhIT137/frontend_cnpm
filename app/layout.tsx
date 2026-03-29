@@ -2,7 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
-import { Loading } from "@/components/common/LoadingComponent";
+import Header from "@/components/layouts/Header";
+import { LoadingProvider } from "@/context/LoadingContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { AuthMessageProvider } from "@/context/AuthMessageContext";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -67,7 +70,14 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
-                <Suspense fallback={<Loading />}>{children}</Suspense>
+                <AuthProvider>
+                    <LoadingProvider>
+                        <AuthMessageProvider>
+                            <Header />
+                            <Suspense>{children}</Suspense>
+                        </AuthMessageProvider>
+                    </LoadingProvider>
+                </AuthProvider>
             </body>
         </html>
     );

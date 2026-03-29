@@ -1,6 +1,9 @@
+import { TouristAreaDetail } from "@/constants/router";
+import { useNextRouter } from "@/libs/hooks/useNextRouter";
 import Image from "next/image";
 
 type TouristAreaProductProps = {
+    id: number;
     url: string;
     name: string;
     title: string;
@@ -10,6 +13,7 @@ type TouristAreaProductProps = {
 };
 
 export const TouristAreaProduct = ({
+    id,
     url,
     name,
     title,
@@ -17,6 +21,8 @@ export const TouristAreaProduct = ({
     onViewMap,
     // onDetail,
 }: TouristAreaProductProps) => {
+    const { go } = useNextRouter();
+
     return (
         <>
             <div className="group w-full bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
@@ -57,7 +63,9 @@ export const TouristAreaProduct = ({
                             Xem trên bản đồ
                         </button>
                         <button
-                            // onClick={onDetail}
+                            onClick={() => {
+                                go(TouristAreaDetail(id));
+                            }}
                             className="text-sm px-4 py-1.5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 active:scale-95 transition"
                         >
                             Xem thêm
