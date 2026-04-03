@@ -81,7 +81,11 @@ const MapView = ({
         if (markerGroup) {
             markerGroup.clearLayers();
             locations.forEach((item) => {
-                const marker = L.marker([item.latitude, item.longitude], {
+                const lat = item.latitude ?? item.departure?.coords?.[0];
+                const lng = item.longitude ?? item.departure?.coords?.[1];
+                if (!lat || !lng) return;
+
+                const marker = L.marker([lat, lng], {
                     icon: fontAwesomeIcon,
                 });
                 // Dán popup thủ công

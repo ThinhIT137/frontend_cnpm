@@ -9,6 +9,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import { useNextRouter } from "@/libs/hooks/useNextRouter";
 import { TouristAreaDetail } from "@/constants/router";
+import "./home.scss";
 
 export default function Home() {
     const { setLoading } = useLoading();

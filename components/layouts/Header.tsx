@@ -20,6 +20,7 @@ import {
     faUser,
 } from "@fortawesome/free-regular-svg-icons";
 import {
+    faBars,
     faComment,
     faGear,
     faRightFromBracket,
@@ -40,6 +41,7 @@ const Header = () => {
         { name: "Tour", r: Tour },
     ];
 
+    const [isOpenMenu, setIsOpenMenu] = useState(false);
     const [isScrollingDown, setIsScrollingDown] = useState(false);
     const [dropdownUser, setDropdownUser] = useState(false);
     const { setLoading } = useLoading();
@@ -75,7 +77,7 @@ const Header = () => {
     return (
         <>
             <header
-                className={`${isScrollingDown ? "top-4" : "top-0"} ${checkPath() ? "bg-sky-100 sticky" : "backdrop-blur-sm fixed top-0"} w-full flex justify-between items-center px-10 py-3 shadow-sm z-100`}
+                className={`${isScrollingDown ? "top-4" : "top-0"} ${checkPath() ? "bg-sky-100 sticky" : "backdrop-blur-sm fixed top-0"} w-full flex justify-between items-center px-4 sm:px-6 lg:px-10 py-2 sm:py-3 shadow-sm z-100`}
             >
                 {/* LOGO */}
                 <div
@@ -93,7 +95,7 @@ const Header = () => {
                 </div>
 
                 {/* MENU */}
-                <div className="flex items-center gap-8">
+                <div className="hidden lg:flex items-center gap-8">
                     {router.map((item, index) => (
                         <div
                             key={index}
@@ -109,21 +111,20 @@ const Header = () => {
                 </div>
 
                 {/* ICON */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                     {/* Bell */}
-                    <div className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 cursor-pointer transition">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 cursor-pointer transition">
                         <FontAwesomeIcon
                             className="text-gray-700 text-lg"
                             icon={faBell}
                         />
                     </div>
-
                     {/* User */}
                     {isAuth ? (
                         <div className="relative group">
                             {/* Avatar */}
                             <div
-                                className="w-10 h-10 rounded-full overflow-hidden border relative cursor-pointer"
+                                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border relative cursor-pointer"
                                 onClick={() => {
                                     setDropdownUser(!dropdownUser);
                                 }}
@@ -145,7 +146,7 @@ const Header = () => {
                             >
                                 {/* User Info */}
                                 <div className="flex items-center gap-3 p-3 hover:bg-gray-100 cursor-pointer">
-                                    <div className="w-10 h-10 rounded-full overflow-hidden relative">
+                                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden relative">
                                         <Image
                                             src={
                                                 getUserInfo()?.avt ||
@@ -234,6 +235,35 @@ const Header = () => {
                                 className="text-gray-700 text-lg"
                                 icon={faUser}
                             />
+                        </div>
+                    )}
+                    <div className="lg:hidden">
+                        <button
+                            onClick={() => setIsOpenMenu(!isOpenMenu)}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300"
+                        >
+                            <FontAwesomeIcon
+                                className="text-gray-700 text-lg"
+                                icon={faBars}
+                            />
+                        </button>
+                    </div>
+                    {isOpenMenu && (
+                        <div className="lg:hidden absolute top-full left-0 w-full bg-white shadow-md border-t z-50">
+                            <div className="flex flex-col">
+                                {router.map((item, index) => (
+                                    <div
+                                        key={index}
+                                        onClick={() => {
+                                            go(item.r);
+                                            setIsOpenMenu(false);
+                                        }}
+                                        className="px-4 py-3 border-b text-gray-700 font-medium hover:bg-gray-100"
+                                    >
+                                        {item.name}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>

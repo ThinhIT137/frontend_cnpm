@@ -16,5 +16,17 @@ export const Login = "/login";
     /* router tourist area detail */
 }
 export const TouristAreaDetail = (id: number) => {
-    return "/tourist_area_detail?id=" + id.toString();
+    return "/tourist_area/tourist_area_detail?id=" + id.toString();
+};
+
+export const TouristPlaceDetail = (id: number) => {
+    return "/tourist_place/TouristPlaceDetail?id=" + id.toString();
+};
+
+export const HottelDetail = (id: number) => {
+    return "/Hottel/hottel_detail?id=" + id.toString();
+};
+
+export const TourDetail = (id: number) => {
+    return "/Tour/tourDetail?id=" + id.toString();
 };

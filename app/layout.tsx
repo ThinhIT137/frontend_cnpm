@@ -6,6 +6,7 @@ import Header from "@/components/layouts/Header";
 import { LoadingProvider } from "@/context/LoadingContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { AuthMessageProvider } from "@/context/AuthMessageContext";
+import { Footer } from "@/components/layouts/Footer";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -68,13 +69,14 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+                className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-white`}
             >
                 <AuthProvider>
                     <LoadingProvider>
                         <AuthMessageProvider>
                             <Header />
                             <Suspense>{children}</Suspense>
+                            <Footer />
                         </AuthMessageProvider>
                     </LoadingProvider>
                 </AuthProvider>

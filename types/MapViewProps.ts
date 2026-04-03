@@ -1,7 +1,7 @@
 import { TouristAreaProps } from "./TouristAreaProps";
 
 export type MapViewProps = {
-    locations: TouristAreaProps[];
+    locations: any[];
     selectedLocation?: [number, number] | null;
     LocaltionSetView: [number, number];
     size: number;
