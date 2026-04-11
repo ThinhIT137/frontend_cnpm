@@ -15,7 +15,7 @@ interface GetHottelDetailReq {
 export const getListHottelApi = async (data: GetListHottelReq) => {
     try {
         // Dùng GET và truyền params vì backend đang xài [FromQuery]
-        const res = await api.get("/Hottel/list", {
+        const res = await api.get("/Hotel/list", {
             params: {
                 page: data.page,
                 pageSize: data.pageSize,
@@ -31,7 +31,7 @@ export const getListHottelApi = async (data: GetListHottelReq) => {
 // 2. Hàm gọi API lấy chi tiết Khách sạn (Tự động +1 Click và lưu Lịch sử)
 export const getHottelDetailApi = async (data: GetHottelDetailReq) => {
     try {
-        const res = await api.get("/Hottel/detail", {
+        const res = await api.get("/Hotel/detail", {
             params: {
                 id: data.id,
             },

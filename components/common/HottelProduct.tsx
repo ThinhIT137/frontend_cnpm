@@ -1,6 +1,6 @@
 "use client";
 
-import { useNextRouter } from "@/libs/hooks/useNextRouter";
+import { useNextRouter } from "@/hooks/useNextRouter";
 import Image from "next/image";
 import { HottelProps } from "@/types/HottelProps";
 import { HottelDetail } from "@/constants/router";

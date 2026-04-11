@@ -1,12 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Suspense } from "react";
-import Header from "@/components/layouts/Header";
 import { LoadingProvider } from "@/context/LoadingContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { AuthMessageProvider } from "@/context/AuthMessageContext";
-import { Footer } from "@/components/layouts/Footer";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -73,11 +70,7 @@ export default function RootLayout({
             >
                 <AuthProvider>
                     <LoadingProvider>
-                        <AuthMessageProvider>
-                            <Header />
-                            <Suspense>{children}</Suspense>
-                            <Footer />
-                        </AuthMessageProvider>
+                        <AuthMessageProvider>{children}</AuthMessageProvider>
                     </LoadingProvider>
                 </AuthProvider>
             </body>

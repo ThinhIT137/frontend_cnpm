@@ -1,6 +1,6 @@
 "use client";
 
-import { useNextRouter } from "@/libs/hooks/useNextRouter";
+import { useNextRouter } from "@/hooks/useNextRouter";
 import Image from "next/image";
 import { TourProps } from "@/types/TourProps";
 import { TourDetail } from "@/constants/router";

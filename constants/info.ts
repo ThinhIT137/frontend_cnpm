@@ -8,3 +8,21 @@ export const getUserInfo = () => {
         role: localStorage.getItem("role") || "",
     };
 };
+
+export const role =
+    typeof window !== "undefined" ? localStorage.getItem("role") || "" : "";
+export const name =
+    typeof window !== "undefined" ? localStorage.getItem("name") || "" : "";
+export const avt =
+    typeof window !== "undefined" ? localStorage.getItem("avt") || "" : "";
+export const email =
+    typeof window !== "undefined" ? localStorage.getItem("email") || "" : "";
+export const accessToken =
+    typeof window !== "undefined"
+        ? localStorage.getItem("accessToken") || ""
+        : "";
+
+export const setUpload = (name: string, avt: string) => {
+    localStorage.setItem("name", name);
+    localStorage.setItem("avt", avt);
+};

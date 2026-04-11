@@ -14,6 +14,8 @@ export const tourApi = async ({ page = 1, pageSize = 10 }) => {
         },
     );
 
+    console.log(res);
+
     if (res.data.success) {
         console.log(res.data.message);
         return res.data.data;

@@ -1,6 +1,6 @@
 import { ResetPasswordRequest } from "@/types/ResetPasswordRequestProps";
 import { api } from "../api";
-import { addToken } from "@/libs/hooks/authLogin";
+import { addToken } from "@/hooks/authLogin";
 import { AuthResponseProps } from "@/types/AuthResponseProps";
 
 export const resetPasswordApi = async ({

@@ -2,18 +2,22 @@
 
 import { getUserInfo } from "@/constants/info";
 import {
+    contributeComments,
+    helpAndSupport,
     Home,
     Hottel,
     Login,
+    placedAndPrivate,
+    profile,
     Tour,
     Tourist_Area,
     Tourist_Place,
 } from "@/constants/router";
 import { useAuth } from "@/context/AuthContext";
 import { useLoading } from "@/context/LoadingContext";
-import { logOut } from "@/libs/hooks/authLogin";
-import { isAccessTokenValid } from "@/libs/hooks/isAccessTokenValid";
-import { useNextRouter } from "@/libs/hooks/useNextRouter";
+import { logOut } from "@/hooks/authLogin";
+import { isAccessTokenValid } from "@/hooks/isAccessTokenValid";
+import { useNextRouter } from "@/hooks/useNextRouter";
 import {
     faBell,
     faCircleQuestion,
@@ -166,7 +170,12 @@ const Header = () => {
 
                                 {/* Menu */}
                                 <div className="p-1">
-                                    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+                                    <div
+                                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
+                                        onClick={() => {
+                                            go(profile);
+                                        }}
+                                    >
                                         <FontAwesomeIcon
                                             icon={faUser}
                                             className="text-gray-600"
@@ -176,7 +185,12 @@ const Header = () => {
                                         </span>
                                     </div>
 
-                                    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+                                    <div
+                                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
+                                        onClick={() => {
+                                            go(placedAndPrivate);
+                                        }}
+                                    >
                                         <FontAwesomeIcon
                                             icon={faGear}
                                             className="text-gray-600"
@@ -186,7 +200,12 @@ const Header = () => {
                                         </span>
                                     </div>
 
-                                    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+                                    <div
+                                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
+                                        onClick={() => {
+                                            go(helpAndSupport);
+                                        }}
+                                    >
                                         <FontAwesomeIcon
                                             icon={faCircleQuestion}
                                             className="text-gray-600"
@@ -196,7 +215,12 @@ const Header = () => {
                                         </span>
                                     </div>
 
-                                    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+                                    <div
+                                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
+                                        onClick={() => {
+                                            go(contributeComments);
+                                        }}
+                                    >
                                         <FontAwesomeIcon
                                             icon={faComment}
                                             className="text-gray-600"

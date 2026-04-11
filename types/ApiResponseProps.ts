@@ -1,4 +1,4 @@
-export type ApiResponseProps<T> = {
+export type ApiResponseProps<T = any> = {
     success: boolean;
     message: string;
     data: T;

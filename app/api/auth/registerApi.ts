@@ -1,4 +1,4 @@
-import { addToken } from "@/libs/hooks/authLogin";
+import { addToken } from "@/hooks/authLogin";
 import { registerRequestProps } from "@/types/RegisterRequestProps";
 import { api } from "../api";
 import { AuthResponseProps } from "@/types/AuthResponseProps";

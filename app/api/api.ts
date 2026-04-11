@@ -1,8 +1,8 @@
 import axios from "axios";
-import { addToken } from "../../libs/hooks/authLogin";
+import { addToken } from "../../hooks/authLogin";
 import { config } from "process";
 import { error } from "console";
-import { removeLocalStorage } from "@/libs/hooks/removeLocalStorage";
+import { removeLocalStorage } from "@/hooks/removeLocalStorage";
 // import { useRouter } from "next/navigation";
 let isRefreshing = false;
 let pendingRequests: any[] = [];
@@ -44,7 +44,7 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
-        Promise.reject(error);
+        return Promise.reject(error);
     },
 );
 

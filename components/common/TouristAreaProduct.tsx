@@ -1,7 +1,7 @@
 "use client";
 
 import { TouristAreaDetail } from "@/constants/router";
-import { useNextRouter } from "@/libs/hooks/useNextRouter";
+import { useNextRouter } from "@/hooks/useNextRouter";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
