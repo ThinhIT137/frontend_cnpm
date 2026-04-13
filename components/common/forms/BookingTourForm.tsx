@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { profileApi } from "@/app/api/profileApi"; // Chú ý import đúng
 
 type Departure = {
     id: number;
@@ -80,34 +81,35 @@ export function BookingTourForm({
 
         setIsSubmitting(true);
         try {
-            // Gom payload gửi Backend Booking
+            // 🔴 ĐÃ CẬP NHẬT PAYLOAD KHỚP VỚI DTO C# (PascalCase)
             const payload = {
-                bookingType: "Tour",
-                contactName: contact.name,
-                contactPhone: contact.phone,
-                note: `Đón tại: ${contact.address}. Ghi chú: ${contact.note}`,
-                totalAmount: totalPrice,
-                details:
-                    bookingType === "Bao Nguyên Chuyến"
-                        ? [
-                              {
-                                  tourDepartureId: currentDep.id,
-                                  isPrivateTour: true,
-                                  unitPrice: totalPrice,
-                              },
-                          ]
-                        : selectedSeats.map((seat) => ({
-                              tourDepartureId: currentDep.id,
-                              seatNumber: seat,
-                              isPrivateTour: false,
-                              unitPrice: basePrice,
-                          })),
+                BookingType: "Tour",
+                ContactName: contact.name,
+                ContactPhone: contact.phone,
+                ContactAddress: contact.address,
+                Note: contact.note,
+                TotalAmount: totalPrice,
+                TourDepartureId: currentDep.id,
+                SeatNumbers:
+                    bookingType === "Bao Nguyên Chuyến" ? [] : selectedSeats,
+                IsPrivateTour: bookingType === "Bao Nguyên Chuyến",
             };
+
             console.log("Đang gửi booking Tour:", payload);
-            alert("🎉 Đặt Tour thành công!");
-            onClose();
+
+            // 🔴 GỌI API THỰC TẾ
+            const res = await profileApi.createBooking(payload);
+
+            if (res && res.success) {
+                alert(
+                    "🎉 Đặt Tour thành công! Chờ Admin công ty Tour xác nhận nha sếp.",
+                );
+                onClose();
+            } else {
+                alert("❌ Đặt Tour thất bại: " + res?.message);
+            }
         } catch (error) {
-            alert("❌ Có lỗi xảy ra!");
+            alert("❌ Có lỗi xảy ra hoặc phiên đăng nhập đã hết hạn!");
         } finally {
             setIsSubmitting(false);
         }

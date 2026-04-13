@@ -5,14 +5,15 @@ import { profileApi } from "@/app/api/profileApi";
 import { supabase } from "@/libs/supabase";
 import { avt, setUpload } from "@/constants/info";
 import { useLoading } from "@/context/LoadingContext";
+import AccountUpgradeForm from "@/components/common/forms/AccountUpgradeForm"; // 🔴 IMPORT FORM VÀO ĐÂY
 
 export default function PlacedAndPrivatePage() {
     const { setLoading } = useLoading();
     // --- STATE CHO THÔNG TIN CÁ NHÂN ---
     const [name, setName] = useState("");
-    const [avatarUrl, setAvatarUrl] = useState(""); // URL ảnh hiện tại
+    const [avatarUrl, setAvatarUrl] = useState("");
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null); // Ảnh khi vừa chọn (chưa upload)
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
     const [profileMsg, setProfileMsg] = useState<{
@@ -31,15 +32,19 @@ export default function PlacedAndPrivatePage() {
         text: string;
     } | null>(null);
 
-    // GIẢ LẬP: Lấy thông tin user hiện tại lúc mới load trang (Bác tự thay bằng Context hoặc API getMe của bác nhé)
+    // 🔴 STATE LƯU ROLE (Dùng để quyết định có hiện thẻ 3 hay không)
+    const [currentRole, setCurrentRole] = useState("user");
+
     useEffect(() => {
         setLoading(true);
-        // Chỗ này chắc chắn window/localStorage đã tồn tại
         const savedName = localStorage.getItem("name") || "";
         const savedAvt = localStorage.getItem("avt");
+        const savedRole = localStorage.getItem("role")?.toLowerCase() || "user";
 
         if (savedName) setName(savedName);
         if (savedAvt) setAvatarUrl(savedAvt);
+        setCurrentRole(savedRole);
+
         setLoading(false);
     }, []);
 
@@ -50,7 +55,7 @@ export default function PlacedAndPrivatePage() {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
             setSelectedFile(file);
-            setPreviewUrl(URL.createObjectURL(file)); // Hiện ảnh review ngay lập tức
+            setPreviewUrl(URL.createObjectURL(file));
         }
     };
 
@@ -63,11 +68,9 @@ export default function PlacedAndPrivatePage() {
             setLoading(true);
             let finalAvatarUrl = avatarUrl;
 
-            // BƯỚC 1: Nếu user có chọn ảnh mới -> Upload lên Supabase trước
             if (selectedFile) {
                 const fileExt = selectedFile.name.split(".").pop();
                 const fileName = `avt_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-                // Upload vào bucket "Avt_Img"
                 const { error: uploadError } = await supabase.storage
                     .from("avt_img")
                     .upload(fileName, selectedFile);
@@ -75,14 +78,12 @@ export default function PlacedAndPrivatePage() {
                 if (uploadError)
                     throw new Error("Lỗi khi tải ảnh lên Supabase.");
 
-                // Lấy Public URL
                 const { data } = supabase.storage
                     .from("avt_img")
                     .getPublicUrl(fileName);
                 finalAvatarUrl = data.publicUrl;
             }
 
-            // BƯỚC 2: Gọi API Backend để lưu Tên + Link ảnh Supabase
             const res = await profileApi.updateProfile({
                 name: name.trim() ? name : undefined,
                 avt: finalAvatarUrl,
@@ -94,7 +95,7 @@ export default function PlacedAndPrivatePage() {
                     text: "Cập nhật hồ sơ thành công!",
                 });
                 if (res.data?.avt) setAvatarUrl(res.data.avt);
-                setSelectedFile(null); // Reset file chọn
+                setSelectedFile(null);
                 setUpload(name.trim() ? name : "", finalAvatarUrl);
             } else {
                 setProfileMsg({ type: "error", text: res.message });
@@ -318,6 +319,13 @@ export default function PlacedAndPrivatePage() {
                     </div>
                 </form>
             </div>
+
+            {/* 🔴 THẺ 3: NÂNG CẤP TÀI KHOẢN (Chỉ hiện nếu chưa phải là owner hoặc admin) */}
+            {currentRole !== "admin" && currentRole !== "owner" && (
+                <div className="mt-8">
+                    <AccountUpgradeForm />
+                </div>
+            )}
         </div>
     );
 }

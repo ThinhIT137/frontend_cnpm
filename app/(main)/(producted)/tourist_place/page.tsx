@@ -69,7 +69,7 @@ const TouristPlace = () => {
                 </div>
 
                 {/* MAP bên phải */}
-                <div className="flex-1 h-[300px] sm:h-[400px] lg:h-[calc(100vh-100px)] lg:sticky lg:top-24">
+                <div className="flex-1 h-[300px] sm:h-[400px] lg:h-[calc(100vh-100px)] lg:sticky lg:top-24 z-10">
                     <div className="w-full h-full rounded-2xl overflow-hidden shadow-xl border border-zinc-200 bg-white">
                         {touristPlace.length > 0 ? (
                             <MapView

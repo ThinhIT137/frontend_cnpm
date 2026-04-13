@@ -3,14 +3,22 @@
 import { useLoading } from "@/context/LoadingContext";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { getHottelDetailApi } from "@/app/api/hottelApi";
 import Image from "next/image";
-import { useNextRouter } from "@/hooks/useNextRouter";
-import { Hottel, TouristPlaceDetail } from "@/constants/router";
+// 🔴 BỎ DÒNG IMPORT useNextRouter Đi
+import Link from "next/link"; // 🔴 IMPORT Link CỦA NEXT.JS VÀO ĐÂY
+import { Hottel } from "@/constants/router";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Keyboard } from "swiper/modules";
 import { BookingHotelForm } from "@/components/common/forms/BookingHotelForm";
+import { profileApi } from "@/app/api/profileApi";
+import ReviewSection, { UserProps } from "@/components/layouts/ReviewSection";
+
+// IMPORT MODAL REPORT VÀ FONT AWESOME
+import ReportModal from "@/components/layouts/ReportModal";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFlag } from "@fortawesome/free-solid-svg-icons";
 
 // Load MapView động
 const MapView = dynamic(() => import("@/components/layouts/MapView"), {
@@ -20,16 +28,51 @@ const MapView = dynamic(() => import("@/components/layouts/MapView"), {
     ),
 });
 
-const hottelDetail = () => {
+const HottelDetail = () => {
     const searchParams = useSearchParams();
     const hottelId = Number(searchParams.get("id"));
     const { setLoading } = useLoading();
-    const { go } = useNextRouter();
-    const [isOpen, setIsOpen] = useState(false);
+    // 🔴 BỎ CÁI go ĐI
 
-    // Dùng 'any' tạm cho lẹ, nếu ông kỹ tính thì tạo Type HottelDetailProps nha
+    // ==============================================================
+    // 1. TẤT CẢ HOOKS PHẢI NẰM TRÊN CÙNG
+    // ==============================================================
+    const [isOpen, setIsOpen] = useState(false);
     const [hottelDetail, sethottelDetail] = useState<any>(null);
     const [isBookingOpen, setIsBookingOpen] = useState(false);
+    const [currentUser, setCurrentUser] = useState<UserProps | null>(null);
+
+    // STATE CHO REPORT VÀ FAVORITE
+    const [isReportOpen, setIsReportOpen] = useState(false);
+    const [isLiked, setIsLiked] = useState(false);
+
+    // USEMEMO KHÓA MẢNG CHO MAPVIEW (Tránh render vô hạn)
+    const mapLocationArray = useMemo(() => {
+        return hottelDetail ? [hottelDetail] : [];
+    }, [hottelDetail]);
+
+    const mapCenter = useMemo(() => {
+        return hottelDetail
+            ? ([
+                  hottelDetail.latitude ?? 15.8,
+                  hottelDetail.longitude ?? 105.8,
+              ] as [number, number])
+            : ([15.8, 105.8] as [number, number]);
+    }, [hottelDetail]);
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const token = localStorage.getItem("accessToken");
+            if (token) {
+                setCurrentUser({
+                    id: "",
+                    name: localStorage.getItem("name") || "Khách",
+                    avt: localStorage.getItem("avt") || "/Img/User_Icon.png",
+                    role: localStorage.getItem("role") || "user",
+                });
+            }
+        }
+    }, []);
 
     const fetchData = async () => {
         if (!hottelId) return;
@@ -38,6 +81,8 @@ const hottelDetail = () => {
             const res = await getHottelDetailApi({ id: hottelId });
             if (res.success) {
                 sethottelDetail(res.data);
+                // Gán isFavorite từ API
+                setIsLiked(res.data?.isFavorite ?? false);
             }
         } catch (err) {
             console.error("Lỗi lấy chi tiết KS:", err);
@@ -50,14 +95,62 @@ const hottelDetail = () => {
     useEffect(() => {
         fetchData();
     }, [hottelId]);
-    // onClick={go(TouristPlaceDetail(hottelDetail.touris))
-    // Nếu chưa có data thì return rỗng (tránh lỗi chớp màn hình)
+
+    const handleToggleLike = async () => {
+        if (!currentUser)
+            return alert("Vui lòng đăng nhập để thả tim nha sếp!");
+
+        // Optimistic UI
+        setIsLiked(!isLiked);
+        if (hottelDetail) {
+            sethottelDetail((prev: any) =>
+                prev
+                    ? {
+                          ...prev,
+                          favorite_count: isLiked
+                              ? prev.favorite_count - 1
+                              : prev.favorite_count + 1,
+                      }
+                    : null,
+            );
+        }
+
+        try {
+            const res = await profileApi.toggleFavorite({
+                EntityId: hottelId,
+                EntityType: "hotel",
+            });
+            if (res && res.success) {
+                console.log("Đã thả tim trên server:", res.isFavorite);
+            }
+        } catch (error) {
+            // Nếu lỗi thì vả lại trạng thái cũ
+            setIsLiked(isLiked);
+            if (hottelDetail) {
+                sethottelDetail((prev: any) =>
+                    prev
+                        ? {
+                              ...prev,
+                              favorite_count: isLiked
+                                  ? prev.favorite_count + 1
+                                  : prev.favorite_count - 1,
+                          }
+                        : null,
+                );
+            }
+            alert("Lỗi mạng, thả tim thất bại!");
+        }
+    };
+
+    // ==============================================================
+    // 2. LOGIC RENDER (RETURN NULL SAU KHI GỌI XONG HOOKS)
+    // ==============================================================
     if (!hottelDetail) return null;
+
     const galleryImages = hottelDetail.images?.length
         ? hottelDetail.images
-        : [hottelDetail.coverImageUrl || "/Img/ImgNull.jpg"];
+        : [{ url: hottelDetail.coverImageUrl || "/Img/ImgNull.jpg" }];
 
-    // Format giá tiền
     const formattedPrice = hottelDetail.price
         ? new Intl.NumberFormat("vi-VN", {
               style: "currency",
@@ -66,19 +159,27 @@ const hottelDetail = () => {
         : "Đang cập nhật";
 
     return (
-        <div className="min-h-screen bg-zinc-50 pb-12">
+        <div className="min-h-screen bg-zinc-50 pb-12 relative">
+            {/* NÚT REPORT GÓC PHẢI MÀN HÌNH */}
+            <button
+                onClick={() => setIsReportOpen(true)}
+                title="Báo cáo nội dung xấu"
+                className="absolute top-6 right-6 lg:right-20 z-50 w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-md hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors border border-zinc-100"
+            >
+                <FontAwesomeIcon icon={faFlag} />
+            </button>
+
             <main className="max-w-6xl mx-auto px-4 pt-6 flex flex-col gap-6">
                 {/* 1. BREADCRUMB & HEADER */}
                 <div className="flex flex-col gap-3">
                     <div className="text-sm text-blue-600 font-medium">
-                        <span
-                            className="cursor-pointer"
-                            onClick={() => {
-                                go(Hottel);
-                            }}
+                        {/* 🔴 THAY BẰNG THẺ LINK CỦA NEXT.JS NÈ SẾP */}
+                        <Link
+                            href={Hottel}
+                            className="cursor-pointer hover:underline"
                         >
                             Khách sạn
-                        </span>
+                        </Link>{" "}
                         /{" "}
                         <span className="text-zinc-500">
                             {hottelDetail.name}
@@ -96,7 +197,9 @@ const hottelDetail = () => {
                                 <span className="text-yellow-500 text-sm">
                                     {"⭐".repeat(
                                         Math.round(
-                                            hottelDetail.rating_average || 4,
+                                            hottelDetail.rating_average > 0
+                                                ? hottelDetail.rating_average
+                                                : 5,
                                         ),
                                     )}
                                 </span>
@@ -110,32 +213,42 @@ const hottelDetail = () => {
                             </p>
                         </div>
 
-                        {/* Thống kê nhỏ góc phải */}
+                        {/* Thống kê nhỏ góc phải CÓ NÚT TIM */}
                         <div className="flex gap-4 items-center bg-white px-4 py-2 rounded-2xl shadow-sm border border-zinc-100 shrink-0">
                             <div className="flex flex-col items-center">
                                 <span className="text-xl font-bold text-zinc-800">
-                                    {hottelDetail.rating_average || "4.0"}
+                                    {hottelDetail.rating_average > 0
+                                        ? hottelDetail.rating_average.toFixed(1)
+                                        : "5.0"}
                                 </span>
                                 <span className="text-xs text-zinc-500">
                                     {hottelDetail.rating_count} đánh giá
                                 </span>
                             </div>
                             <div className="w-px h-8 bg-zinc-200"></div>
-                            <div className="flex flex-col items-center">
-                                <span className="text-xl font-bold text-red-500">
+
+                            {/* NÚT TIM */}
+                            <button
+                                onClick={handleToggleLike}
+                                className="flex flex-col items-center group cursor-pointer transition-transform active:scale-95 outline-none"
+                            >
+                                <span
+                                    className={`text-xl font-bold transition-colors ${isLiked ? "text-red-500 animate-bounce" : "text-zinc-300 group-hover:text-red-400"}`}
+                                >
                                     ❤️
                                 </span>
                                 <span className="text-xs text-zinc-500">
-                                    {hottelDetail.favorite_count} lượt thích
+                                    {hottelDetail.favorite_count || 0} lượt
+                                    thích
                                 </span>
-                            </div>
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                {/* 2. GALLERY ẢNH (Hiển thị 1 ảnh to, nếu có nhiều ảnh thì chia grid) */}
+                {/* 2. GALLERY ẢNH */}
                 <div
-                    className="w-full h-[300px] md:h-[400px] lg:h-[500px] rounded-3xl overflow-hidden relative shadow-md group"
+                    className="w-full h-[300px] md:h-[lịch45 lg:h-[500px] rounded-3xl overflow-hidden relative shadow-md group cursor-pointer"
                     onClick={() => setIsOpen(true)}
                 >
                     <Image
@@ -146,59 +259,56 @@ const hottelDetail = () => {
                         priority
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-
-                    {/* Nút bấm mở Gallery */}
-                    <div
-                        onClick={() => setIsOpen(true)} // Bấm vào đây để mở Modal
-                        className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-xl text-sm font-medium cursor-pointer hover:bg-black/80 transition"
-                    >
+                    <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-black/80 transition">
                         🖼️ Xem tất cả ảnh
                     </div>
                 </div>
 
-                {/* MODAL XEM ẢNH FULL MÀN HÌNH (LIGHTBOX) */}
+                {/* MODAL XEM ẢNH FULL MÀN HÌNH */}
                 {isOpen && (
                     <div
-                        // Nền đen phủ kín màn hình (z-index cực cao để đè lên mọi thứ)
                         className="fixed inset-0 z-[999] bg-black/95 flex items-center justify-center backdrop-blur-sm transition-opacity"
-                        onClick={() => setIsOpen(false)} // Click vào vùng tối (nền) sẽ đóng
+                        onClick={() => setIsOpen(false)}
                     >
-                        {/* Nút Đóng (X) ở góc phải trên */}
                         <button
                             onClick={() => setIsOpen(false)}
-                            className="absolute top-4 right-4 md:top-6 md:right-6 text-white text-4xl hover:text-gray-400 transition z-[1000] cursor-pointer p-2"
+                            className="absolute top-4 right-4 md:top-6 md:right-6 text-white text-4xl hover:text-gray-400 transition z-[1000] p-2"
                         >
                             &times;
                         </button>
-
-                        {/* Wrapper chứa Swiper - Ngăn chặn sự kiện click lan ra ngoài nền đen */}
                         <div
                             className="w-full max-w-6xl h-[60vh] md:h-[85vh] relative px-4"
-                            onClick={(e) => e.stopPropagation()} // Quan trọng: Click vào ảnh không bị đóng modal
+                            onClick={(e) => e.stopPropagation()}
                         >
                             <Swiper
                                 modules={[Navigation, Pagination, Keyboard]}
-                                navigation // Nút mũi tên trái phải
+                                navigation
                                 pagination={{
                                     clickable: true,
                                     dynamicBullets: true,
-                                }} // Dấu chấm tròn ở dưới
-                                keyboard={{ enabled: true }} // Cho phép dùng phím mũi tên trên bàn phím để sang ảnh
+                                }}
+                                keyboard={{ enabled: true }}
                                 grabCursor={true}
                                 className="w-full h-full rounded-lg"
                             >
                                 {galleryImages.map(
-                                    (src: string, index: number) => (
+                                    (img: any, index: number) => (
                                         <SwiperSlide
                                             key={index}
                                             className="flex items-center justify-center"
                                         >
                                             <div className="relative w-full h-full flex items-center justify-center">
+                                                {/* Fix lỗi src là string thay vì object */}
                                                 <Image
-                                                    src={src}
+                                                    src={
+                                                        typeof img === "string"
+                                                            ? img
+                                                            : img.url ||
+                                                              "/Img/ImgNull.jpg"
+                                                    }
                                                     alt={`Hotel image ${index + 1}`}
                                                     fill
-                                                    className="object-contain" // Dùng object-contain để ảnh không bị cắt xén khi phóng to
+                                                    className="object-contain"
                                                 />
                                             </div>
                                         </SwiperSlide>
@@ -211,9 +321,7 @@ const hottelDetail = () => {
 
                 {/* 3. NỘI DUNG CHIA 2 CỘT */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                    {/* CỘT TRÁI (Mô tả & Bản đồ) */}
                     <div className="lg:col-span-2 flex flex-col gap-8">
-                        {/* Box Mô tả */}
                         <div className="bg-white rounded-3xl p-6 shadow-sm border border-zinc-100">
                             <h2 className="text-xl font-bold text-zinc-800 mb-4">
                                 Mô tả khách sạn
@@ -224,7 +332,6 @@ const hottelDetail = () => {
                             </p>
                         </div>
 
-                        {/* Box Tiện ích (Chém gió thêm cho đẹp UI) */}
                         <div className="bg-white rounded-3xl p-6 shadow-sm border border-zinc-100">
                             <h2 className="text-xl font-bold text-zinc-800 mb-4">
                                 Tiện nghi phổ biến
@@ -258,25 +365,17 @@ const hottelDetail = () => {
                             </h2>
                             <div className="flex-1 rounded-2xl overflow-hidden border border-zinc-200 relative">
                                 <MapView
-                                    locations={[hottelDetail]} // Quăng đúng 1 cái KS này vào
-                                    selectedLocation={[
-                                        hottelDetail.latitude,
-                                        hottelDetail.longitude,
-                                    ]}
-                                    LocaltionSetView={[
-                                        hottelDetail.latitude,
-                                        hottelDetail.longitude,
-                                    ]}
-                                    size={15} // Phóng to lên xíu vì đây là xem 1 cái
+                                    locations={mapLocationArray}
+                                    LocaltionSetView={mapCenter}
+                                    size={15}
                                 />
                             </div>
                         </div>
                     </div>
 
-                    {/* CỘT PHẢI (Sticky Box Chốt Sale) */}
+                    {/* CỘT PHẢI (Sticky Box) */}
                     <div className="lg:col-span-1 lg:sticky lg:top-24">
                         <div className="bg-white rounded-3xl p-6 shadow-xl border border-zinc-100 flex flex-col gap-6">
-                            {/* Giá tiền */}
                             <div>
                                 <p className="text-zinc-500 text-sm mb-1 font-medium">
                                     Giá phòng mỗi đêm từ
@@ -287,10 +386,7 @@ const hottelDetail = () => {
                                     </span>
                                 </div>
                             </div>
-
                             <hr className="border-dashed border-zinc-200" />
-
-                            {/* Thông số mồi khách */}
                             <div className="flex flex-col gap-3 text-sm text-zinc-600">
                                 <div className="flex justify-between items-center bg-zinc-50 p-3 rounded-xl border border-zinc-100">
                                     <span className="font-medium flex items-center gap-2">
@@ -302,7 +398,6 @@ const hottelDetail = () => {
                                         khách
                                     </span>
                                 </div>
-
                                 <div className="flex justify-between items-center bg-zinc-50 p-3 rounded-xl border border-zinc-100">
                                     <span className="font-medium flex items-center gap-2">
                                         🔥 <span>Độ hot</span>
@@ -312,22 +407,39 @@ const hottelDetail = () => {
                                     </span>
                                 </div>
                             </div>
-
-                            {/* Nút bấm */}
                             <button
                                 onClick={() => setIsBookingOpen(true)}
                                 className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-200"
                             >
                                 Chọn phòng ngay
                             </button>
-
                             <p className="text-xs text-center text-zinc-400">
                                 Cam kết giá tốt nhất • Không thu phí đặt chỗ
                             </p>
                         </div>
                     </div>
                 </div>
+
+                {/* REVIEW SECTION */}
+                <ReviewSection
+                    entityId={hottelDetail.id}
+                    entityType="hotel"
+                    currentUser={currentUser}
+                    onReviewSuccess={fetchData}
+                />
             </main>
+
+            {/* MODAL REPORT */}
+            {hottelDetail && (
+                <ReportModal
+                    isOpen={isReportOpen}
+                    onClose={() => setIsReportOpen(false)}
+                    entityId={hottelDetail.id}
+                    entityType="hotel"
+                />
+            )}
+
+            {/* MODAL BOOKING */}
             {isBookingOpen && (
                 <div className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div
@@ -337,7 +449,7 @@ const hottelDetail = () => {
                         <BookingHotelForm
                             hotelId={hottelDetail.id}
                             hotelName={hottelDetail.name}
-                            rooms={hottelDetail.rooms || []} // Lấy danh sách phòng từ API
+                            rooms={hottelDetail.rooms || []}
                             onClose={() => setIsBookingOpen(false)}
                         />
                     </div>
@@ -347,4 +459,4 @@ const hottelDetail = () => {
     );
 };
 
-export default hottelDetail;
+export default HottelDetail;

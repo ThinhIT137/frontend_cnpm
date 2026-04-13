@@ -18,7 +18,6 @@ export default function ProfileDashboard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingData, setEditingData] = useState<any>(null);
 
-    // 🔴 THÊM STATE TÌM KIẾM VÀ LỌC
     const [keyword, setKeyword] = useState("");
     const [filterStatus, setFilterStatus] = useState("");
 
@@ -46,7 +45,6 @@ export default function ProfileDashboard() {
         setIsMounted(true);
     }, []);
 
-    // 🔴 SỬA HÀM FETCH ĐỂ NHẬN KEYWORD VÀ STATUS
     const fetchTableData = async (
         tab: string,
         page: number = 1,
@@ -56,77 +54,94 @@ export default function ProfileDashboard() {
         if (tab === "profile") return;
         setLoading(true);
         try {
-            let res;
-            switch (tab) {
-                case "tourist_area":
-                    res = await profileApi.getMyTouristAreas(
-                        page,
-                        10,
-                        searchKw,
-                        searchStatus,
-                    );
-                    break;
-                case "tourist_place":
-                    res = await profileApi.getMyTouristPlaces(
-                        page,
-                        10,
-                        searchKw,
-                        searchStatus,
-                    );
-                    break;
-                case "hotel":
-                    res = await profileApi.getMyHotels(
-                        page,
-                        10,
-                        searchKw,
-                        searchStatus,
-                    );
-                    break;
-                case "tour":
-                    res = await profileApi.getMyTours(
-                        page,
-                        10,
-                        searchKw,
-                        searchStatus,
-                    );
-                    break;
-                case "review":
-                    res = await profileApi.getMyReviews(page, 10);
-                    break;
-                case "marker":
-                    res = await profileApi.getMyMarkers();
-                    setTableData(res.data || []);
-                    setTotalCount(res.data?.length || 0);
-                    setTotalPages(1);
-                    setLoading(false);
-                    return;
-            }
+            // 🔴 XỬ LÝ API RIÊNG CHO TỪNG LOẠI ĐỂ TRÁNH NHẦM LẪN KIỂU DỮ LIỆU
+            if (tab === "marker" || tab === "booking" || tab === "my_booking") {
+                let responseData: any[] = [];
 
-            if (res && res.success) {
-                setTableData(res.data.items || []);
-                setTotalCount(res.data.totalCount || 0);
-                setTotalPages(res.data.totalPages || 1);
-                setCurrentPage(res.data.currentPage || 1);
+                if (tab === "marker") {
+                    const res = await profileApi.getMyMarkers();
+                    responseData = res.data || [];
+                } else if (tab === "booking") {
+                    const res = await profileApi.getReceivedBookings();
+                    responseData = res.data || []; // Vì profileApi return res.data, mà res.data CỦA BE trả về là object { success, data: [] }
+                } else if (tab === "my_booking") {
+                    const res = await profileApi.getMyBookings();
+                    responseData = res.data || []; // Tương tự
+                }
+
+                setTableData(responseData);
+                setTotalCount(responseData.length);
+                setTotalPages(1);
+                setCurrentPage(1);
+            } else {
+                // 🟢 XỬ LÝ NHÓM API CÓ PHÂN TRANG (Hotel, Tour, Area...)
+                let res;
+                switch (tab) {
+                    case "tourist_area":
+                        res = await profileApi.getMyTouristAreas(
+                            page,
+                            10,
+                            searchKw,
+                            searchStatus,
+                        );
+                        break;
+                    case "tourist_place":
+                        res = await profileApi.getMyTouristPlaces(
+                            page,
+                            10,
+                            searchKw,
+                            searchStatus,
+                        );
+                        break;
+                    case "hotel":
+                        res = await profileApi.getMyHotels(
+                            page,
+                            10,
+                            searchKw,
+                            searchStatus,
+                        );
+                        break;
+                    case "tour":
+                        res = await profileApi.getMyTours(
+                            page,
+                            10,
+                            searchKw,
+                            searchStatus,
+                        );
+                        break;
+                    case "review":
+                        res = await profileApi.getMyReviews(page, 10);
+                        console.log(res);
+                        break;
+                }
+
+                if (res && res.success && res.data) {
+                    setTableData(res.data.items || []);
+                    setTotalCount(res.data.totalCount || 0);
+                    setTotalPages(res.data.totalPages || 1);
+                    setCurrentPage(res.data.currentPage || 1);
+                } else {
+                    setTableData([]);
+                }
             }
         } catch (error) {
+            console.error("Lỗi Fetch Data:", error);
             setTableData([]);
         } finally {
             setLoading(false);
         }
     };
 
-    // 🔴 EFFECT TÌM KIẾM DEBOUNCE (CHỐNG SPAM API)
     useEffect(() => {
         if (isMounted && activeTab !== "profile") {
             const delayDebounceFn = setTimeout(() => {
                 fetchTableData(activeTab, currentPage, keyword, filterStatus);
-            }, 500); // 0.5s sau khi ngưng gõ mới gọi API
+            }, 500);
 
             return () => clearTimeout(delayDebounceFn);
         }
     }, [keyword, filterStatus, currentPage, activeTab, isMounted]);
 
-    // Khi đổi Tab thì XÓA trắng ô Search
     const handleTabChange = (tabId: string) => {
         setActiveTab(tabId);
         setKeyword("");
@@ -135,7 +150,6 @@ export default function ProfileDashboard() {
     };
 
     const translateRole = (role: string) => {
-        /* Giữ nguyên */
         switch (role) {
             case "admin":
                 return "Quản trị viên";
@@ -151,11 +165,11 @@ export default function ProfileDashboard() {
     };
 
     const getMenuItems = (role: string) => {
-        /* Giữ nguyên */
         let menu = [
             { id: "profile", label: "👤 Thông tin cá nhân" },
             { id: "marker", label: "📍 Địa điểm đã đánh dấu" },
             { id: "review", label: "⭐ Quản lý đánh giá" },
+            { id: "my_booking", label: "🛒 Lịch sử Đặt chỗ của tôi" },
         ];
         if (["user", "admin", "owner", "tour", "hotel"].includes(role)) {
             menu.push({ id: "tourist_area", label: "🏞️ Quản lý Khu du lịch" });
@@ -165,6 +179,9 @@ export default function ProfileDashboard() {
             menu.push({ id: "hotel", label: "🏨 Quản lý Khách sạn" });
         if (["tour", "owner", "admin"].includes(role))
             menu.push({ id: "tour", label: "🚌 Quản lý Tour" });
+        if (["hotel", "tour", "owner", "admin"].includes(role)) {
+            menu.push({ id: "booking", label: "📅 Quản lý Đơn đặt chỗ" });
+        }
         return menu;
     };
 
@@ -172,17 +189,18 @@ export default function ProfileDashboard() {
         setEditingData(null);
         setIsModalOpen(true);
     };
+
     const handleOpenEdit = (itemData: any) => {
         setEditingData(itemData);
         setIsModalOpen(true);
     };
+
     const handleCloseModal = () => {
         setIsModalOpen(false);
         fetchTableData(activeTab, currentPage, keyword, filterStatus);
     };
 
     const handleDelete = async (id: number) => {
-        /* Giữ nguyên */
         if (!confirm("Sếp có chắc muốn bay màu em nó không?")) return;
         try {
             if (activeTab === "marker") await profileApi.deleteMarker(id);
@@ -192,10 +210,28 @@ export default function ProfileDashboard() {
                 await profileApi.deleteTouristPlace(id);
             else if (activeTab === "hotel") await profileApi.deleteHotel(id);
             else if (activeTab === "tour") await profileApi.deleteTour(id);
+
             alert("🗑️ Bay màu thành công!");
             fetchTableData(activeTab, currentPage, keyword, filterStatus);
         } catch (err: any) {
             alert("❌ Lỗi xóa!");
+        }
+    };
+
+    const handleApproveBooking = async (id: number, status: string) => {
+        if (!confirm(`Sếp có chắc muốn cập nhật đơn thành ${status} không?`))
+            return;
+        setLoading(true);
+        try {
+            const res = await profileApi.updateBookingStatus(id, status);
+            if (res.success) {
+                alert("✅ " + res.message);
+                fetchTableData(activeTab, currentPage, keyword, filterStatus);
+            }
+        } catch (error) {
+            alert("❌ Lỗi duyệt đơn!");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -216,24 +252,26 @@ export default function ProfileDashboard() {
                             Hệ thống quản lý dữ liệu.
                         </p>
                     </div>
-                    {activeTab !== "review" && (
-                        <button
-                            onClick={handleOpenAdd}
-                            className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-2"
-                        >
-                            <span>+</span> Thêm mới
-                        </button>
-                    )}
+                    {/* ẨN NÚT THÊM MỚI VỚI CÁC TAB KHÔNG CẦN */}
+                    {activeTab !== "review" &&
+                        activeTab !== "booking" &&
+                        activeTab !== "my_booking" && (
+                            <button
+                                onClick={handleOpenAdd}
+                                className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-2"
+                            >
+                                <span>+</span> Thêm mới
+                            </button>
+                        )}
                 </div>
 
-                {/* 🔴 GẮN STATE CHO INPUT VÀ SELECT NÈ */}
                 <div className="flex flex-col sm:flex-row gap-4 mb-6">
                     <div className="flex-1 relative">
                         <input
                             type="text"
                             value={keyword}
                             onChange={(e) => setKeyword(e.target.value)}
-                            placeholder="🔍 Nhập từ khóa tìm kiếm (Tên, tiêu đề)..."
+                            placeholder="🔍 Nhập từ khóa tìm kiếm..."
                             className="w-full px-4 py-2.5 rounded-xl bg-zinc-50 border border-zinc-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-200 transition-all text-sm text-zinc-700"
                         />
                     </div>
@@ -251,7 +289,6 @@ export default function ProfileDashboard() {
                     )}
                 </div>
 
-                {/* BẢNG DỮ LIỆU - GIỮ NGUYÊN CODE CŨ CỦA SẾP */}
                 <div className="overflow-x-auto rounded-xl border border-zinc-200 flex-1">
                     <table className="w-full text-left border-collapse whitespace-nowrap">
                         <thead className="bg-zinc-50 sticky top-0 z-10">
@@ -260,7 +297,12 @@ export default function ProfileDashboard() {
                                     ID
                                 </th>
                                 <th className="p-4 font-semibold">
-                                    Tên hiển thị
+                                    {activeTab === "booking" ||
+                                    activeTab === "my_booking"
+                                        ? "Thông tin đơn đặt"
+                                        : activeTab === "review"
+                                          ? "Nội dung đánh giá" // 🔴 ĐỔI TIÊU ĐỀ CỘT CHO REVIEW
+                                          : "Tên hiển thị"}
                                 </th>
                                 {showFilterStatus && (
                                     <th className="p-4 font-semibold">
@@ -291,43 +333,236 @@ export default function ProfileDashboard() {
                                         <td className="p-4 text-sm text-zinc-500 text-center">
                                             #{row.id}
                                         </td>
+
+                                        {/* 🔴 TÙY CHỈNH THÔNG TIN HIỂN THỊ DỰA VÀO TAB */}
                                         <td className="p-4 font-medium text-zinc-800">
-                                            {row.name ||
-                                                row.title ||
-                                                "Chưa có tên"}
-                                            {row.price && (
-                                                <div className="text-xs text-sky-600 font-semibold">
-                                                    {row.price.toLocaleString()}{" "}
-                                                    VNĐ
+                                            {activeTab === "booking" ||
+                                            activeTab === "my_booking" ? (
+                                                <div className="flex flex-col gap-1.5">
+                                                    <span className="font-bold text-sky-800 text-base">
+                                                        👤 Khách:{" "}
+                                                        {row.customerName}
+                                                    </span>
+                                                    <span className="text-xs text-zinc-600 font-medium flex items-center gap-1">
+                                                        📞 SĐT:{" "}
+                                                        {row.customerPhone}
+                                                    </span>
+                                                    <div className="mt-1 flex flex-col gap-1 border-l-2 border-sky-300 pl-3 py-1 bg-sky-50/50 rounded-r-lg">
+                                                        {row.details?.map(
+                                                            (detail: any) => (
+                                                                <div
+                                                                    key={
+                                                                        detail.detailId
+                                                                    }
+                                                                    className="flex flex-col"
+                                                                >
+                                                                    <span className="text-sm font-bold text-zinc-700">
+                                                                        {
+                                                                            detail.productName
+                                                                        }
+                                                                    </span>
+                                                                    <span className="text-xs text-zinc-500 flex items-center gap-2">
+                                                                        <span className="bg-zinc-200 text-zinc-700 px-1.5 rounded">
+                                                                            {
+                                                                                detail.info
+                                                                            }
+                                                                        </span>
+                                                                        <span>
+                                                                            Giá:{" "}
+                                                                            <b className="text-zinc-600">
+                                                                                {detail.unitPrice?.toLocaleString()}
+
+                                                                                đ
+                                                                            </b>
+                                                                        </span>
+                                                                    </span>
+                                                                </div>
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                    <div className="text-sm font-black text-red-600 mt-1">
+                                                        💰 Tổng tiền:{" "}
+                                                        {row.totalAmount?.toLocaleString()}{" "}
+                                                        VNĐ
+                                                    </div>
+                                                    <div className="text-xs text-zinc-400">
+                                                        ⏰ Đặt lúc:{" "}
+                                                        {new Date(
+                                                            row.createdAt,
+                                                        ).toLocaleString(
+                                                            "vi-VN",
+                                                        )}
+                                                    </div>
                                                 </div>
+                                            ) : activeTab === "review" ? (
+                                                // 🔴 RENDER GIAO DIỆN CHO TAB REVIEW
+                                                <div className="flex flex-col gap-1 max-w-sm whitespace-normal">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="bg-zinc-100 text-zinc-600 text-xs px-2 py-0.5 rounded font-bold uppercase">
+                                                            {row.entityType}
+                                                        </span>
+                                                        <span className="text-yellow-500 text-xs">
+                                                            {"⭐".repeat(
+                                                                row.score,
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-zinc-700 font-medium italic">
+                                                        "{row.comment}"
+                                                    </p>
+                                                    <span className="text-[10px] text-zinc-400">
+                                                        ⏰{" "}
+                                                        {new Date(
+                                                            row.createdAt,
+                                                        ).toLocaleString(
+                                                            "vi-VN",
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    {row.name ||
+                                                        row.title ||
+                                                        "Chưa có tên"}
+                                                    {row.price && (
+                                                        <div className="text-xs text-sky-600 font-semibold">
+                                                            {row.price.toLocaleString()}{" "}
+                                                            VNĐ
+                                                        </div>
+                                                    )}
+                                                </>
                                             )}
                                         </td>
+
                                         {showFilterStatus && (
                                             <td className="p-4">
-                                                {row.status === "Approved" ||
-                                                row.status === "Active" ||
-                                                row.status === "ACTIVE" ? (
-                                                    <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-lg border border-green-200">
-                                                        Đã duyệt
-                                                    </span>
-                                                ) : row.status === "Pending" ? (
-                                                    <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-lg border border-amber-200">
-                                                        Chờ duyệt
-                                                    </span>
-                                                ) : row.status ===
-                                                  "Rejected" ? (
-                                                    <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-lg border border-red-200">
-                                                        Bị từ chối
+                                                {/* HIỂN THỊ STATUS CHO ĐƠN ĐẶT (BOOKING) */}
+                                                {activeTab === "booking" ||
+                                                activeTab === "my_booking" ? (
+                                                    <span
+                                                        className={`px-3 py-1 text-xs font-bold rounded-lg border ${
+                                                            row.bookingStatus ===
+                                                            "Confirmed"
+                                                                ? "bg-green-100 text-green-700 border-green-200"
+                                                                : row.bookingStatus ===
+                                                                    "Cancelled"
+                                                                  ? "bg-red-100 text-red-700 border-red-200"
+                                                                  : row.bookingStatus ===
+                                                                      "Completed"
+                                                                    ? "bg-blue-100 text-blue-700 border-blue-200"
+                                                                    : "bg-amber-100 text-amber-700 border-amber-200" // Pending
+                                                        }`}
+                                                    >
+                                                        {row.bookingStatus ===
+                                                        "Confirmed"
+                                                            ? "✅ Đã duyệt"
+                                                            : row.bookingStatus ===
+                                                                "Cancelled"
+                                                              ? "❌ Đã hủy"
+                                                              : row.bookingStatus ===
+                                                                  "Completed"
+                                                                ? "🎉 Hoàn tất"
+                                                                : "⏳ Chờ duyệt"}
                                                     </span>
                                                 ) : (
-                                                    <span className="px-3 py-1 bg-zinc-100 text-zinc-700 text-xs font-bold rounded-lg border border-zinc-200">
-                                                        {row.status || "N/A"}
+                                                    /* HIỂN THỊ STATUS CHO DỮ LIỆU BÌNH THƯỜNG */
+                                                    <span
+                                                        className={`px-3 py-1 text-xs font-bold rounded-lg border ${
+                                                            [
+                                                                "Approved",
+                                                                "Active",
+                                                                "ACTIVE",
+                                                            ].includes(
+                                                                row.status,
+                                                            )
+                                                                ? "bg-green-100 text-green-700 border-green-200"
+                                                                : row.status ===
+                                                                    "Pending"
+                                                                  ? "bg-amber-100 text-amber-700 border-amber-200"
+                                                                  : row.status ===
+                                                                      "Rejected"
+                                                                    ? "bg-red-100 text-red-700 border-red-200"
+                                                                    : "bg-zinc-100 text-zinc-700 border-zinc-200"
+                                                        }`}
+                                                    >
+                                                        {row.status ===
+                                                            "Approved" ||
+                                                        row.status === "Active"
+                                                            ? "Đã duyệt"
+                                                            : row.status ===
+                                                                "Pending"
+                                                              ? "Chờ duyệt"
+                                                              : row.status ===
+                                                                  "Rejected"
+                                                                ? "Bị từ chối"
+                                                                : row.status ||
+                                                                  "N/A"}
                                                     </span>
                                                 )}
                                             </td>
                                         )}
-                                        <td className="p-4 flex gap-2 justify-end">
-                                            {activeTab !== "review" && (
+
+                                        <td className="p-4 flex flex-wrap gap-2 justify-end">
+                                            {/* NÚT THAO TÁC CHO BOOKING */}
+                                            {activeTab === "booking" ? (
+                                                row.bookingStatus ===
+                                                    "Pending" && (
+                                                    <>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleApproveBooking(
+                                                                    row.id,
+                                                                    "Confirmed",
+                                                                )
+                                                            }
+                                                            className="px-4 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded-lg transition-colors"
+                                                        >
+                                                            ✅ Chốt đơn
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleApproveBooking(
+                                                                    row.id,
+                                                                    "Cancelled",
+                                                                )
+                                                            }
+                                                            className="px-4 py-1.5 bg-red-100 hover:bg-red-200 text-red-600 text-sm font-semibold rounded-lg transition-colors"
+                                                        >
+                                                            ❌ Hủy
+                                                        </button>
+                                                    </>
+                                                )
+                                            ) : activeTab === "my_booking" ? (
+                                                /* 🔴 KHÁCH CHỈ ĐƯỢC XEM, KHÔNG CÓ NÚT GÌ CẢ (HOẶC NÚT CHI TIẾT) */
+                                                <span className="text-xs text-zinc-400 italic">
+                                                    Không có thao tác
+                                                </span>
+                                            ) : activeTab === "review" ? (
+                                                /* 🔴 NÚT XÓA CHO TAB REVIEW */
+                                                <button
+                                                    onClick={async () => {
+                                                        if (
+                                                            confirm(
+                                                                "Sếp có chắc muốn xóa bình luận này?",
+                                                            )
+                                                        ) {
+                                                            await profileApi.deleteReview(
+                                                                row.id,
+                                                            );
+                                                            fetchTableData(
+                                                                activeTab,
+                                                                currentPage,
+                                                                keyword,
+                                                                filterStatus,
+                                                            );
+                                                        }
+                                                    }}
+                                                    className="px-4 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-sm font-semibold rounded-lg transition-colors"
+                                                >
+                                                    🗑️ Xóa
+                                                </button>
+                                            ) : (
+                                                /* NÚT THAO TÁC CHO DỮ LIỆU THƯỜNG */
                                                 <>
                                                     <button
                                                         onClick={() =>
@@ -395,7 +630,6 @@ export default function ProfileDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* MENU TRÁI */}
                 <div className="lg:col-span-3 flex flex-col gap-4 h-fit sticky top-24">
-                    {/* ... (Giữ nguyên thẻ user) ... */}
                     <div className="bg-white p-5 rounded-3xl shadow-sm border border-zinc-100 flex flex-col items-center text-center">
                         <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 bg-zinc-100">
                             <img
@@ -428,7 +662,11 @@ export default function ProfileDashboard() {
                             <button
                                 key={item.id}
                                 onClick={() => handleTabChange(item.id)}
-                                className={`text-left px-4 py-3 rounded-xl font-medium text-sm transition-all ${activeTab === item.id ? "bg-sky-50 text-sky-700 shadow-sm border border-sky-100" : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent"}`}
+                                className={`text-left px-4 py-3 rounded-xl font-medium text-sm transition-all ${
+                                    activeTab === item.id
+                                        ? "bg-sky-50 text-sky-700 shadow-sm border border-sky-100"
+                                        : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent"
+                                }`}
                             >
                                 {item.label}
                             </button>
@@ -451,6 +689,10 @@ export default function ProfileDashboard() {
                         renderTableManager("🏨 Quản Lý Khách Sạn")}
                     {activeTab === "tour" &&
                         renderTableManager("🚌 Quản Lý Chuyến Đi (Tour)")}
+                    {activeTab === "booking" &&
+                        renderTableManager("📅 Quản Lý Đơn Đặt Chỗ")}
+                    {activeTab === "my_booking" &&
+                        renderTableManager("🛒 Lịch sử Đặt chỗ của tôi")}
                 </div>
             </div>
 

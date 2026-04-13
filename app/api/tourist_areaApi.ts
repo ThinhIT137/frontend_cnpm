@@ -24,6 +24,7 @@ export const tourist_areaApi = async ({ page, pageSize }: PageRequestProps) => {
             console.log(res.data.message);
             return res.data.data;
         }
+        return;
     }
 
     console.log("tourist_area");

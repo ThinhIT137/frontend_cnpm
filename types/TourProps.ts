@@ -21,8 +21,18 @@ export type TourProps = {
     favorite_count: number;
     trending_Score: number;
     type: string;
+    isFavorite?: boolean;
     images: ImageProps[];
     coverImageUrl?: string;
+};
+
+export type TourScheduleProps = {
+    id: number;
+    startDate: string;
+    totalSeats: number;
+    availableSeats: number;
+    status: string;
+    bookedSeats: string[]; // Mảng chứa các ghế đã đặt
 };
 
 export type TourDetailProps = TourProps & {
@@ -31,4 +41,5 @@ export type TourDetailProps = TourProps & {
         name: string;
     } | null;
     itineraries: TourItineraryProps[];
+    schedules?: TourScheduleProps[];
 };

@@ -25,12 +25,11 @@ const SideMenuAdmin = () => {
     // Mảng cấu hình các menu item
     const menuItems = [
         { title: "Tổng quan", path: "/Admin", icon: "📊" }, // Thêm trang chủ Admin
-        { title: "Quản lý dòng tiền", path: AdminMoney, icon: "💰" },
-        { title: "Người dùng", path: AdminUser, icon: "👥" },
         { title: "Duyệt dịch vụ", path: AdminPeding, icon: "⏳" },
         { title: "Báo cáo vi phạm", path: AdminReport, icon: "🚩" },
+        { title: "Người dùng", path: AdminUser, icon: "👥" },
         { title: "Khu du lịch", path: AdminTouristArea, icon: "🏞️" },
-        { title: "Địa điểm check-in", path: AdminTouristPlace, icon: "📍" },
+        { title: "Địa điểm du lịch45", path: AdminTouristPlace, icon: "📍" },
         { title: "Khách sạn", path: AdminHotel, icon: "🏨" },
         { title: "Chuyến Tour", path: AdminTour, icon: "🚌" },
         { title: "Quảng cáo (Banner)", path: AdminBanner, icon: "📢" },

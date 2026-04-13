@@ -35,25 +35,78 @@ export default function FormInsertMarker({
     });
 
     useEffect(() => {
-        profileApi
-            .getAllTouristAreas()
-            .then((res) => setAreas(res?.data || []));
-        profileApi
-            .getAllTouristPlaces()
-            .then((res) => setPlaces(res?.data || []));
+        // Load danh sách trước để tí nữa dò GPS
+        const fetchDropdowns = async () => {
+            const resAreas = await profileApi.getAllTouristAreas();
+            const resPlaces = await profileApi.getAllTouristPlaces();
 
-        if (initialData) {
-            setForm({
-                title: initialData.title || "",
-                description: initialData.description || "",
-                latitude: Number(initialData.latitude) || 0,
-                longitude: Number(initialData.longitude) || 0,
-                isPublic: initialData.isPublic ?? true,
-                tourist_Place_Id: initialData.tourist_Place_Id || 0,
-            });
-            // Tạm thời chưa có Area_Id trong Marker nên tự suy ngược từ Place nếu cần (hoặc người dùng tự chọn lại)
-            setCreatedMarkerId(initialData.id);
-        }
+            const areasData = resAreas?.data || [];
+            const placesData = resPlaces?.data || [];
+
+            setAreas(areasData);
+            setPlaces(placesData);
+
+            // NẾU CÓ TRUYỀN TỌA ĐỘ TỪ BÊN NGOÀI VÀO (Lúc Double Click Map)
+            if (initialData) {
+                let defaultPlaceId = initialData.tourist_Place_Id || 0;
+                let defaultAreaId: number | "" = "";
+
+                // 🔴 THỰC HIỆN AUTO-SCAN ĐỊA ĐIỂM NGAY LÚC MỞ FORM
+                if (
+                    !defaultPlaceId &&
+                    initialData.latitude &&
+                    initialData.longitude &&
+                    placesData.length > 0
+                ) {
+                    let closestPlace: any = null;
+                    let minDistance = 15; // 15km
+
+                    placesData.forEach((p: any) => {
+                        if (p.latitude && p.longitude) {
+                            const dist = getDistanceFromLatLonInKm(
+                                initialData.latitude,
+                                initialData.longitude,
+                                p.latitude,
+                                p.longitude,
+                            );
+                            if (dist < minDistance) {
+                                minDistance = dist;
+                                closestPlace = p;
+                            }
+                        }
+                    });
+
+                    // Nếu dò ra thì gán luôn
+                    if (closestPlace) {
+                        defaultPlaceId = closestPlace.id;
+                        defaultAreaId = closestPlace.tourist_Area_Id;
+                    }
+                }
+
+                // Nếu có data sửa (Edit) thì set Area luôn
+                if (initialData.id && defaultPlaceId) {
+                    const matchedPlace = placesData.find(
+                        (p: any) => p.id === defaultPlaceId,
+                    );
+                    if (matchedPlace)
+                        defaultAreaId = matchedPlace.tourist_Area_Id;
+                }
+
+                setSelectedAreaId(defaultAreaId);
+                setForm({
+                    title: initialData.title || "",
+                    description: initialData.description || "",
+                    latitude: Number(initialData.latitude) || 0,
+                    longitude: Number(initialData.longitude) || 0,
+                    isPublic: initialData.isPublic ?? true,
+                    tourist_Place_Id: defaultPlaceId,
+                });
+
+                if (initialData.id) setCreatedMarkerId(initialData.id);
+            }
+        };
+
+        fetchDropdowns();
     }, [initialData]);
 
     const handleAreaChange = (areaId: number) => {

@@ -36,6 +36,7 @@ export const tourDetailApi = async (id: number) => {
 
     if (res.data.success) {
         console.log(res.data.message);
+        console.log(res.data.data); 
         return res.data.data;
     } else {
         console.log(res.data.message);

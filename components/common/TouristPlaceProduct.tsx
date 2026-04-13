@@ -85,7 +85,7 @@ export const TouristPlaceProduct = ({
                     <span className="text-xs font-bold text-gray-800 leading-none mt-0.5">
                         {rating_average
                             ? Number(rating_average).toFixed(1)
-                            : "4.5"}
+                            : "5.0"}
                     </span>
                 </div>
             </div>

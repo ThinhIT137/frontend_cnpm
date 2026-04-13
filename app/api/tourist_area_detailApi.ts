@@ -20,7 +20,7 @@ export const touristAreaDetailApi = async ({
     if (type === "TouristPlace") {
         const res = await api.post<
             ApiResponseProps<touristAreaDetailResponseProps<TouristPlaceProps>>
-        >("/TouristArea/DetailTouristArea", {
+        >("/TouristArea/DetailTouristAreaUser", {
             id: id,
             type: type,
             TourismProduct: {

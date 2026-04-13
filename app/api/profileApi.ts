@@ -131,6 +131,10 @@ export const profileApi = {
         const res = await api.get(`/Marker/me`);
         return res.data;
     },
+    getPublicMarkers: async () => {
+        const res = await api.get(`/Marker/public`);
+        return res.data;
+    },
     /**
      * Lấy danh sách các đánh giá (Review) nhận được
      */
@@ -291,6 +295,95 @@ export const profileApi = {
         const res = await api.put(
             `/Image/set-cover/${id}?entityType=${entityType}&entityId=${entityId}`,
         );
+        return res.data;
+    },
+
+    // ================== API CHO REVIEW / COMMENT ==================
+    /**
+     * Gửi đánh giá mới (POST)
+     */
+    submitReview: async (payload: {
+        EntityId: number;
+        EntityType: string;
+        Star: number;
+        Content: string;
+    }) => {
+        // Gọi API POST /api/Review (Khớp với ReviewController bên C#)
+        const res = await api.post("/Review", payload);
+        return res.data;
+    },
+
+    /**
+     * Lấy danh sách đánh giá (GET)
+     */
+    getReviews: async (entityType: string, entityId: number) => {
+        // Gọi API GET /api/Review/{type}/{id}
+        const res = await api.get(`/Review/${entityType}/${entityId}`);
+        return res.data;
+    },
+    /**
+     * Thả tim hoặc Bỏ thả tim
+     */
+    toggleFavorite: async (payload: {
+        EntityId: number;
+        EntityType: string;
+    }) => {
+        // Khớp với cái [HttpPost("toggle")] trong FavoriteController của sếp
+        const res = await api.post("/Favorite/toggle", payload);
+        return res.data;
+    },
+
+    /**
+     * Gửi báo cáo vi phạm
+     */
+    submitReport: async (payload: {
+        EntityType: string;
+        EntityId: number;
+        Reason: string;
+        Description?: string;
+    }) => {
+        // Gọi API POST /api/User/reports (Khớp với UserController của sếp)
+        const res = await api.post("/User/reports", payload);
+        return res.data;
+    },
+    // ================== API CHO BOOKING ĐẶT CHỖ ==================
+    /**
+     * Tạo đơn đặt phòng khách sạn hoặc đặt tour
+     */
+    createBooking: async (payload: {
+        BookingType: string;
+        ContactName: string;
+        ContactPhone: string;
+        ContactAddress?: string;
+        Note?: string;
+        TotalAmount: number;
+        HotelRoomIds?: number[];
+        TourDepartureId?: number;
+        SeatNumbers?: string[];
+        IsPrivateTour?: boolean;
+    }) => {
+        // Khớp với cái [HttpPost("create")] trong BookingController
+        const res = await api.post("/Booking/create", payload);
+        return res.data;
+    },
+    // ================== QUẢN LÝ BOOKING ==================
+    getReceivedBookings: async () => {
+        const res = await api.get(`/Booking/received-bookings`);
+        return res.data;
+    },
+    updateBookingStatus: async (id: number, status: string) => {
+        const res = await api.put(`/Booking/${id}/status`, { status });
+        return res.data;
+    },
+    getMyBookings: async () => {
+        const res = await api.get(`/Booking/my-bookings`);
+        console.log(res.data);
+        return res.data;
+    },
+    // ================== NÂNG CẤP TÀI KHOẢN ==================
+    upgradeRole: async (payload: { role: string }) => {
+        // Gọi xuống endpoint vừa tạo ở UserController
+        const res = await api.put("/User/upgrade-role", payload);
         return res.data;
     },
 };

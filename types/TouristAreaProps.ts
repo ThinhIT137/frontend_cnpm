@@ -9,6 +9,7 @@ export type TouristAreaProps = {
     rating_average: number;
     click_count: number;
     favorite_count: number;
+    isFavorite: boolean;
     trending_Score: number;
     latitude: number;
     longitude: number;

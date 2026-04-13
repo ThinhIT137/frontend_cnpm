@@ -102,7 +102,7 @@ const Tour = () => {
                 {/* ========================================== */}
                 {/* CỘT PHẢI: BẢN ĐỒ MAP VIEW */}
                 {/* ========================================== */}
-                <div className="flex-1 flex flex-col gap-4 h-[50vh] lg:h-[calc(100vh-100px)] lg:sticky lg:top-20">
+                <div className="flex-1 flex flex-col gap-4 h-[50vh] lg:h-[calc(100vh-100px)] lg:sticky lg:top-20 z-10">
                     <div className="w-full flex-1 rounded-3xl overflow-hidden shadow-md border border-zinc-200 bg-white relative min-h-[300px]">
                         <MapView
                             locations={tours}
