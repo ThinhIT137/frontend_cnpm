@@ -13,7 +13,9 @@ export const useNotification = (isAuth: boolean) => {
 
         const fetchOldNotifications = async () => {
             try {
-                const res = await api.get("/Notification");
+                const res = await api.get(
+                    `/Notification?t=${new Date().getTime()}`,
+                );
                 if (res.data.success) {
                     setNotifications(res.data.data);
                     setUnreadCount(res.data.unreadCount);
@@ -33,9 +35,19 @@ export const useNotification = (isAuth: boolean) => {
         const token = localStorage.getItem("accessToken");
         if (!token) return;
 
+        console.log(
+            typeof window !== "undefined"
+                ? localStorage.getItem("accessToken") || ""
+                : "",
+        );
+
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("https://localhost:7016/hubs/notification", {
-                accessTokenFactory: () => token,
+                accessTokenFactory: () => {
+                    return typeof window !== "undefined"
+                        ? localStorage.getItem("accessToken") || ""
+                        : "";
+                },
             })
             .withAutomaticReconnect()
             .build();
@@ -66,5 +78,5 @@ export const useNotification = (isAuth: boolean) => {
         };
     }, [isAuth]);
 
-    return { notifications, unreadCount, setUnreadCount };
+    return { notifications, setNotifications, unreadCount, setUnreadCount };
 };

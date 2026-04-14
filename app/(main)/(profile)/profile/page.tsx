@@ -54,7 +54,6 @@ export default function ProfileDashboard() {
         if (tab === "profile") return;
         setLoading(true);
         try {
-            // 🔴 XỬ LÝ API RIÊNG CHO TỪNG LOẠI ĐỂ TRÁNH NHẦM LẪN KIỂU DỮ LIỆU
             if (tab === "marker" || tab === "booking" || tab === "my_booking") {
                 let responseData: any[] = [];
 
@@ -63,10 +62,10 @@ export default function ProfileDashboard() {
                     responseData = res.data || [];
                 } else if (tab === "booking") {
                     const res = await profileApi.getReceivedBookings();
-                    responseData = res.data || []; // Vì profileApi return res.data, mà res.data CỦA BE trả về là object { success, data: [] }
+                    responseData = res.data || [];
                 } else if (tab === "my_booking") {
                     const res = await profileApi.getMyBookings();
-                    responseData = res.data || []; // Tương tự
+                    responseData = res.data || [];
                 }
 
                 setTableData(responseData);
@@ -74,9 +73,11 @@ export default function ProfileDashboard() {
                 setTotalPages(1);
                 setCurrentPage(1);
             } else {
-                // 🟢 XỬ LÝ NHÓM API CÓ PHÂN TRANG (Hotel, Tour, Area...)
                 let res;
                 switch (tab) {
+                    case "favorite":
+                        res = await profileApi.getMyFavorites(page, 10);
+                        break;
                     case "tourist_area":
                         res = await profileApi.getMyTouristAreas(
                             page,
@@ -111,7 +112,6 @@ export default function ProfileDashboard() {
                         break;
                     case "review":
                         res = await profileApi.getMyReviews(page, 10);
-                        console.log(res);
                         break;
                 }
 
@@ -167,6 +167,7 @@ export default function ProfileDashboard() {
     const getMenuItems = (role: string) => {
         let menu = [
             { id: "profile", label: "👤 Thông tin cá nhân" },
+            { id: "favorite", label: "❤️ Đã yêu thích" },
             { id: "marker", label: "📍 Địa điểm đã đánh dấu" },
             { id: "review", label: "⭐ Quản lý đánh giá" },
             { id: "my_booking", label: "🛒 Lịch sử Đặt chỗ của tôi" },
@@ -235,6 +236,74 @@ export default function ProfileDashboard() {
         }
     };
 
+    // =====================================
+    // HÀM MỚI: KHÁCH HÀNG TỰ HỦY ĐƠN ĐẶT CHỖ
+    // =====================================
+    const handleCancelBooking = async (id: number) => {
+        if (
+            !confirm(
+                `Bạn có chắc chắn muốn hủy đơn đặt chỗ #${id} này không? Hành động này không thể hoàn tác.`,
+            )
+        )
+            return;
+
+        setLoading(true);
+        try {
+            // Nhớ thêm hàm cancelBooking vào profileApi.ts nhé sếp!
+            const res: any = await profileApi.cancelBooking(id);
+            if (res?.data?.success || res?.success) {
+                alert("✅ Hủy đơn thành công!");
+                fetchTableData(activeTab, currentPage, keyword, filterStatus);
+            } else {
+                alert(
+                    "❌ Hủy đơn thất bại: " +
+                        (res?.data?.message || res?.message),
+                );
+            }
+        } catch (error: any) {
+            console.error("Cancel error:", error);
+            alert(
+                "❌ Không thể hủy đơn. Bạn chỉ có thể hủy khi đơn đang ở trạng thái 'Chờ duyệt'.",
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleToggleFavorite = async (
+        entityId: number,
+        entityType: string,
+    ) => {
+        if (
+            !confirm(
+                "Sếp có chắc chắn muốn cạn tình, bỏ yêu thích mục này không? 💔",
+            )
+        )
+            return;
+        setLoading(true);
+        try {
+            // Truyền payload đúng như interface sếp đã khai báo
+            const res = await profileApi.toggleFavorite({
+                EntityId: entityId,
+                EntityType: entityType,
+            });
+
+            // Gọi toggle thành công, nếu isFavorite == false nghĩa là nó vừa bị gỡ khỏi danh sách
+            if (res.success) {
+                alert("💔 Đã bỏ yêu thích thành công!");
+                // Refresh lại bảng để nó bay màu khỏi UI
+                fetchTableData(activeTab, currentPage, keyword, filterStatus);
+            } else {
+                alert("❌ Có lỗi xảy ra, thử lại sau sếp nhé!");
+            }
+        } catch (error) {
+            console.error("Lỗi toggle favorite:", error);
+            alert("❌ Lỗi hệ thống khi bỏ yêu thích!");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const currentMenu = getMenuItems(userInfo.role);
 
     const renderTableManager = (
@@ -252,7 +321,6 @@ export default function ProfileDashboard() {
                             Hệ thống quản lý dữ liệu.
                         </p>
                     </div>
-                    {/* ẨN NÚT THÊM MỚI VỚI CÁC TAB KHÔNG CẦN */}
                     {activeTab !== "review" &&
                         activeTab !== "booking" &&
                         activeTab !== "my_booking" && (
@@ -301,8 +369,10 @@ export default function ProfileDashboard() {
                                     activeTab === "my_booking"
                                         ? "Thông tin đơn đặt"
                                         : activeTab === "review"
-                                          ? "Nội dung đánh giá" // 🔴 ĐỔI TIÊU ĐỀ CỘT CHO REVIEW
-                                          : "Tên hiển thị"}
+                                          ? "Nội dung đánh giá"
+                                          : activeTab === "favorite"
+                                            ? "Thông tin mục yêu thích"
+                                            : "Tên hiển thị"}
                                 </th>
                                 {showFilterStatus && (
                                     <th className="p-4 font-semibold">
@@ -334,7 +404,6 @@ export default function ProfileDashboard() {
                                             #{row.id}
                                         </td>
 
-                                        {/* 🔴 TÙY CHỈNH THÔNG TIN HIỂN THỊ DỰA VÀO TAB */}
                                         <td className="p-4 font-medium text-zinc-800">
                                             {activeTab === "booking" ||
                                             activeTab === "my_booking" ? (
@@ -370,8 +439,7 @@ export default function ProfileDashboard() {
                                                                         <span>
                                                                             Giá:{" "}
                                                                             <b className="text-zinc-600">
-                                                                                {detail.unitPrice?.toLocaleString()}
-
+                                                                                {detail.unitPrice?.toLocaleString()}{" "}
                                                                                 đ
                                                                             </b>
                                                                         </span>
@@ -395,7 +463,6 @@ export default function ProfileDashboard() {
                                                     </div>
                                                 </div>
                                             ) : activeTab === "review" ? (
-                                                // 🔴 RENDER GIAO DIỆN CHO TAB REVIEW
                                                 <div className="flex flex-col gap-1 max-w-sm whitespace-normal">
                                                     <div className="flex items-center gap-2">
                                                         <span className="bg-zinc-100 text-zinc-600 text-xs px-2 py-0.5 rounded font-bold uppercase">
@@ -436,7 +503,6 @@ export default function ProfileDashboard() {
 
                                         {showFilterStatus && (
                                             <td className="p-4">
-                                                {/* HIỂN THỊ STATUS CHO ĐƠN ĐẶT (BOOKING) */}
                                                 {activeTab === "booking" ||
                                                 activeTab === "my_booking" ? (
                                                     <span
@@ -450,7 +516,7 @@ export default function ProfileDashboard() {
                                                                   : row.bookingStatus ===
                                                                       "Completed"
                                                                     ? "bg-blue-100 text-blue-700 border-blue-200"
-                                                                    : "bg-amber-100 text-amber-700 border-amber-200" // Pending
+                                                                    : "bg-amber-100 text-amber-700 border-amber-200"
                                                         }`}
                                                     >
                                                         {row.bookingStatus ===
@@ -465,7 +531,6 @@ export default function ProfileDashboard() {
                                                                 : "⏳ Chờ duyệt"}
                                                     </span>
                                                 ) : (
-                                                    /* HIỂN THỊ STATUS CHO DỮ LIỆU BÌNH THƯỜNG */
                                                     <span
                                                         className={`px-3 py-1 text-xs font-bold rounded-lg border ${
                                                             [
@@ -503,42 +568,113 @@ export default function ProfileDashboard() {
                                         )}
 
                                         <td className="p-4 flex flex-wrap gap-2 justify-end">
-                                            {/* NÚT THAO TÁC CHO BOOKING */}
-                                            {activeTab === "booking" ? (
-                                                row.bookingStatus ===
-                                                    "Pending" && (
-                                                    <>
-                                                        <button
-                                                            onClick={() =>
-                                                                handleApproveBooking(
-                                                                    row.id,
-                                                                    "Confirmed",
-                                                                )
-                                                            }
-                                                            className="px-4 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded-lg transition-colors"
-                                                        >
-                                                            ✅ Chốt đơn
-                                                        </button>
-                                                        <button
-                                                            onClick={() =>
-                                                                handleApproveBooking(
-                                                                    row.id,
-                                                                    "Cancelled",
-                                                                )
-                                                            }
-                                                            className="px-4 py-1.5 bg-red-100 hover:bg-red-200 text-red-600 text-sm font-semibold rounded-lg transition-colors"
-                                                        >
-                                                            ❌ Hủy
-                                                        </button>
-                                                    </>
-                                                )
+                                            {/* NÚT THAO TÁC CHO CHỦ DỊCH VỤ DUYỆT BOOKING */}
+                                            {activeTab === "favorite" ? (
+                                                <button
+                                                    onClick={() =>
+                                                        handleToggleFavorite(
+                                                            row.entityId,
+                                                            row.entityType,
+                                                        )
+                                                    } // id của bảng Favorite
+                                                    className="px-4 py-1.5 bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 text-sm font-semibold rounded-lg transition-colors border border-red-100 shadow-sm active:scale-95"
+                                                >
+                                                    💔 Bỏ thích
+                                                </button>
+                                            ) : activeTab === "booking" ? (
+                                                <>
+                                                    {/* Trường hợp 1: Đơn đang chờ duyệt (Pending) */}
+                                                    {row.bookingStatus ===
+                                                        "Pending" && (
+                                                        <>
+                                                            <button
+                                                                onClick={() =>
+                                                                    handleApproveBooking(
+                                                                        row.id,
+                                                                        "Confirmed",
+                                                                    )
+                                                                }
+                                                                className="px-4 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm active:scale-95"
+                                                            >
+                                                                ✅ Chốt đơn
+                                                            </button>
+                                                            <button
+                                                                onClick={() =>
+                                                                    handleApproveBooking(
+                                                                        row.id,
+                                                                        "Cancelled",
+                                                                    )
+                                                                }
+                                                                className="px-4 py-1.5 bg-red-100 hover:bg-red-200 text-red-600 text-sm font-semibold rounded-lg transition-colors shadow-sm active:scale-95"
+                                                            >
+                                                                ❌ Từ chối
+                                                            </button>
+                                                        </>
+                                                    )}
+
+                                                    {/* Trường hợp 2: Đơn đã duyệt (Confirmed) -> Chủ cơ sở có thể Hủy hộ khách hoặc Đánh dấu Hoàn tất */}
+                                                    {row.bookingStatus ===
+                                                        "Confirmed" && (
+                                                        <>
+                                                            <button
+                                                                onClick={() =>
+                                                                    handleApproveBooking(
+                                                                        row.id,
+                                                                        "Completed",
+                                                                    )
+                                                                }
+                                                                className="px-4 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm active:scale-95"
+                                                                title="Đánh dấu đã phục vụ xong để chốt doanh thu"
+                                                            >
+                                                                🎉 Hoàn tất
+                                                            </button>
+                                                            <button
+                                                                onClick={() =>
+                                                                    handleApproveBooking(
+                                                                        row.id,
+                                                                        "Cancelled",
+                                                                    )
+                                                                }
+                                                                className="px-4 py-1.5 bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-600 text-sm font-semibold rounded-lg transition-colors shadow-sm active:scale-95"
+                                                                title="Hủy đơn theo yêu cầu của khách qua điện thoại"
+                                                            >
+                                                                ⚠️ Hủy đơn
+                                                            </button>
+                                                        </>
+                                                    )}
+
+                                                    {/* Các trạng thái Cancelled hoặc Completed sẽ không hiện nút thao tác nữa (Backend cũng đã block chặn ở Completed) */}
+                                                    {[
+                                                        "Cancelled",
+                                                        "Completed",
+                                                    ].includes(
+                                                        row.bookingStatus,
+                                                    ) && (
+                                                        <span className="text-xs text-zinc-400 italic px-2 py-1 bg-zinc-50 rounded-md border border-zinc-100">
+                                                            Đã chốt sổ
+                                                        </span>
+                                                    )}
+                                                </>
                                             ) : activeTab === "my_booking" ? (
-                                                /* 🔴 KHÁCH CHỈ ĐƯỢC XEM, KHÔNG CÓ NÚT GÌ CẢ (HOẶC NÚT CHI TIẾT) */
-                                                <span className="text-xs text-zinc-400 italic">
-                                                    Không có thao tác
-                                                </span>
+                                                /* 🔴 NÚT HỦY DÀNH CHO KHÁCH HÀNG (CHỈ KHI PENDING) */
+                                                row.bookingStatus ===
+                                                "Pending" ? (
+                                                    <button
+                                                        onClick={() =>
+                                                            handleCancelBooking(
+                                                                row.id,
+                                                            )
+                                                        }
+                                                        className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 hover:border-red-300 text-red-600 text-sm font-semibold rounded-lg transition-all shadow-sm active:scale-95"
+                                                    >
+                                                        ❌ Hủy đơn
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-xs text-zinc-400 italic px-2 py-1 bg-zinc-100 rounded-md">
+                                                        Không thể hủy
+                                                    </span>
+                                                )
                                             ) : activeTab === "review" ? (
-                                                /* 🔴 NÚT XÓA CHO TAB REVIEW */
                                                 <button
                                                     onClick={async () => {
                                                         if (
@@ -562,7 +698,6 @@ export default function ProfileDashboard() {
                                                     🗑️ Xóa
                                                 </button>
                                             ) : (
-                                                /* NÚT THAO TÁC CHO DỮ LIỆU THƯỜNG */
                                                 <>
                                                     <button
                                                         onClick={() =>
@@ -677,6 +812,7 @@ export default function ProfileDashboard() {
                 {/* NỘI DUNG PHẢI */}
                 <div className="lg:col-span-9">
                     {activeTab === "profile" && <PlacedAndPrivatePage />}
+                    {activeTab === "favorite" && renderTableManager("❤️ Mục Đã Yêu Thích", false)} {/* <--- THÊM DÒNG NÀY */}
                     {activeTab === "marker" &&
                         renderTableManager("📍 Địa Điểm Đã Đánh Dấu", false)}
                     {activeTab === "review" &&

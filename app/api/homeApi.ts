@@ -4,7 +4,7 @@ import { HomeResponseProps } from "@/types/HomeResponseProps";
 
 export const homeApi = async () => {
     const res =
-        await api.get<ApiResponseProps<HomeResponseProps>>("/home/index");
+        await api.get<ApiResponseProps<any>>("/home/index");
 
     const response = res.data;
 

@@ -8,11 +8,13 @@ import {
     Eye,
     Loader2,
     ShieldAlert,
+    XCircle, // Bổ sung icon XCircle
 } from "lucide-react";
-import { adminApi, ReportProps } from "@/app/api/adminApi"; // Nhớ trỏ lại đường dẫn cho chuẩn nhé sếp
+import { adminApi, ReportProps } from "@/app/api/adminApi";
 
 export default function AdminReportPage() {
     const [loading, setLoading] = useState<boolean>(true);
+    const [actionLoading, setActionLoading] = useState<number | null>(null); // State để chặn spam click
     const [reports, setReports] = useState<ReportProps[]>([]);
 
     const fetchReports = async () => {
@@ -31,6 +33,36 @@ export default function AdminReportPage() {
         fetchReports();
     }, []);
 
+    // ==========================================
+    // HÀM XỬ LÝ ĐỔI TRẠNG THÁI REPORT
+    // ==========================================
+    const handleUpdateStatus = async (id: number, status: string) => {
+        const statusText = status === "Resolved" ? "Đã giải quyết" : "Từ chối";
+        if (
+            !confirm(
+                `Sếp có chắc muốn chuyển trạng thái báo cáo #${id} thành "${statusText}" không?`,
+            )
+        )
+            return;
+
+        setActionLoading(id); // Hiển thị loading cho dòng đang thao tác
+        try {
+            // Nhớ thêm hàm này vào adminApi.ts nhé!
+            const res = await adminApi.updateReportStatus(id, status);
+            if (res?.success) {
+                alert(`✅ ${res.message}`);
+                fetchReports(); // Refresh lại danh sách sau khi update thành công
+            } else {
+                alert(`❌ Lỗi: ${res?.message || "Không thể cập nhật"}`);
+            }
+        } catch (error) {
+            console.error("Lỗi cập nhật status:", error);
+            alert("❌ Đã xảy ra lỗi hệ thống khi cập nhật trạng thái!");
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
     // Hàm render màu cho Trạng thái
     const renderStatusBadge = (status: string) => {
         switch (status) {
@@ -45,6 +77,12 @@ export default function AdminReportPage() {
                 return (
                     <span className="flex items-center w-fit px-2.5 py-1 bg-green-50 text-green-600 border border-green-200 rounded-full text-xs font-medium">
                         <CheckCircle className="w-3 h-3 mr-1" /> Đã giải quyết
+                    </span>
+                );
+            case "Rejected":
+                return (
+                    <span className="flex items-center w-fit px-2.5 py-1 bg-red-50 text-red-600 border border-red-200 rounded-full text-xs font-medium">
+                        <XCircle className="w-3 h-3 mr-1" /> Bị từ chối
                     </span>
                 );
             default:
@@ -176,33 +214,70 @@ export default function AdminReportPage() {
                                         </td>
                                         <td className="p-4">
                                             <div className="flex justify-center items-center space-x-2">
-                                                {/* Nút Xem Chi tiết (Mock UI) */}
+                                                {/* Nút Xem Chi tiết */}
                                                 <button
                                                     onClick={() =>
                                                         alert(
-                                                            `Đang xem chi tiết report ID: ${report.id}`,
+                                                            `Tính năng xem chi tiết đang phát triển cho Report ID: ${report.id}`,
                                                         )
                                                     }
-                                                    className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded transition-colors"
+                                                    disabled={
+                                                        actionLoading ===
+                                                        report.id
+                                                    }
+                                                    className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded transition-colors disabled:opacity-50"
                                                     title="Xem chi tiết"
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                 </button>
 
-                                                {/* Nút Đánh dấu đã giải quyết */}
+                                                {/* Nút Đánh dấu đã giải quyết / Từ chối (CHỈ HIỆN KHI PENDING) */}
                                                 {report.status ===
                                                     "Pending" && (
-                                                    <button
-                                                        onClick={() =>
-                                                            alert(
-                                                                `Chức năng Resolve đang chờ sếp làm API Backend cho Report ID: ${report.id}`,
-                                                            )
-                                                        }
-                                                        className="p-2 text-green-600 bg-green-50 hover:bg-green-600 hover:text-white rounded transition-colors"
-                                                        title="Đánh dấu đã giải quyết"
-                                                    >
-                                                        <CheckCircle className="w-4 h-4" />
-                                                    </button>
+                                                    <>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleUpdateStatus(
+                                                                    report.id,
+                                                                    "Resolved",
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                actionLoading ===
+                                                                report.id
+                                                            }
+                                                            className="p-2 text-green-600 bg-green-50 hover:bg-green-600 hover:text-white rounded transition-colors disabled:opacity-50"
+                                                            title="Đánh dấu đã giải quyết"
+                                                        >
+                                                            {actionLoading ===
+                                                            report.id ? (
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                            ) : (
+                                                                <CheckCircle className="w-4 h-4" />
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleUpdateStatus(
+                                                                    report.id,
+                                                                    "Rejected",
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                actionLoading ===
+                                                                report.id
+                                                            }
+                                                            className="p-2 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white rounded transition-colors disabled:opacity-50"
+                                                            title="Từ chối báo cáo (Bỏ qua)"
+                                                        >
+                                                            {actionLoading ===
+                                                            report.id ? (
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                            ) : (
+                                                                <XCircle className="w-4 h-4" />
+                                                            )}
+                                                        </button>
+                                                    </>
                                                 )}
                                             </div>
                                         </td>

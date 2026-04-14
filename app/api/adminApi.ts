@@ -317,27 +317,25 @@ export const adminApi = {
     // 7. LẤY DANH SÁCH CHỜ DUYỆT (ADMIN)
     // ==========================================
     getPendingHotels: async () => {
-        const res =
-            await api.get<
-                ApiResponseProps<{
-                    items: any[];
-                    totalCount: number;
-                    totalPages: number;
-                    currentPage: number;
-                }>
-            >(`/Hotel/admin/pending`);
+        const res = await api.get<
+            ApiResponseProps<{
+                items: any[];
+                totalCount: number;
+                totalPages: number;
+                currentPage: number;
+            }>
+        >(`/Hotel/admin/pending`);
         return res.data;
     },
     getPendingTours: async () => {
-        const res =
-            await api.get<
-                ApiResponseProps<{
-                    items: any[];
-                    totalCount: number;
-                    totalPages: number;
-                    currentPage: number;
-                }>
-            >(`/Tour/admin/pending`);
+        const res = await api.get<
+            ApiResponseProps<{
+                items: any[];
+                totalCount: number;
+                totalPages: number;
+                currentPage: number;
+            }>
+        >(`/Tour/admin/pending`);
         return res.data;
     },
     getPendingTouristAreas: async () => {
@@ -361,5 +359,187 @@ export const adminApi = {
             }>
         >(`/TouristPlace/admin/pending`);
         return res.data;
+    },
+    updateReportStatus: async (id: number, status: string) => {
+        // API yêu cầu gửi body có dạng { status: "Resolved" }
+        const res = await api.put(`/Admin/reports/${id}/status`, { status });
+        return res.data;
+    },
+
+    // Thêm vào file adminApi.ts
+    getAllTouristAreas: async (
+        page = 1,
+        pageSize = 10,
+        keyword = "",
+        status = "",
+    ) => {
+        try {
+            const res = await api.get(
+                `/TouristArea/admin/all?page=${page}&pageSize=${pageSize}&keyword=${keyword}&status=${status}`,
+            );
+            return res.data;
+        } catch (error) {
+            console.error("Lỗi lấy danh sách khu du lịch:", error);
+            return null;
+        }
+    },
+
+    deleteTouristArea: async (id: number) => {
+        try {
+            const res = await api.delete(`/TouristArea/${id}`);
+            return res.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || "Lỗi xóa khu du lịch",
+                data: null,
+            };
+        }
+    },
+
+    // Bổ sung vào file adminApi.ts
+    getAllHotels: async (
+        page = 1,
+        pageSize = 10,
+        keyword = "",
+        status = "",
+    ) => {
+        try {
+            const res = await api.get(
+                `/Hotel/admin/all?page=${page}&pageSize=${pageSize}&keyword=${keyword}&status=${status}`,
+            );
+            return res.data;
+        } catch (error) {
+            console.error("Lỗi lấy danh sách khách sạn:", error);
+            return null;
+        }
+    },
+
+    deleteHotel: async (id: number) => {
+        try {
+            const res = await api.delete(`/Hotel/${id}`);
+            return res.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || "Lỗi xóa khách sạn",
+                data: null,
+            };
+        }
+    },
+
+    // Bổ sung vào file adminApi.ts
+    getAllTouristPlaces: async (
+        page = 1,
+        pageSize = 10,
+        keyword = "",
+        status = "",
+    ) => {
+        try {
+            const res = await api.get(
+                `/TouristPlace/admin/all?page=${page}&pageSize=${pageSize}&keyword=${keyword}&status=${status}`,
+            );
+            return res.data;
+        } catch (error) {
+            console.error("Lỗi lấy danh sách địa điểm:", error);
+            return null;
+        }
+    },
+
+    deleteTouristPlace: async (id: number) => {
+        try {
+            const res = await api.delete(`/TouristPlace/${id}`);
+            return res.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || "Lỗi xóa địa điểm",
+                data: null,
+            };
+        }
+    },
+
+    // Bổ sung vào file adminApi.ts
+    getAllTours: async (page = 1, pageSize = 10, keyword = "", status = "") => {
+        try {
+            const res = await api.get(
+                `/Tour/admin/all?page=${page}&pageSize=${pageSize}&keyword=${keyword}&status=${status}`,
+            );
+            return res.data;
+        } catch (error) {
+            console.error("Lỗi lấy danh sách tour:", error);
+            return null;
+        }
+    },
+
+    deleteTour: async (id: number) => {
+        try {
+            const res = await api.delete(`/Tour/${id}`);
+            return res.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || "Lỗi xóa tour",
+                data: null,
+            };
+        }
+    },
+
+    // Các API Quản lý Quảng cáo (Banner)
+    getAllAds: async (page = 1, pageSize = 10, keyword = "") => {
+        try {
+            const res = await api.get(
+                `/Admin/ads/all?page=${page}&pageSize=${pageSize}&keyword=${keyword}`,
+            );
+            return res.data;
+        } catch (error) {
+            console.error("Lỗi lấy danh sách ads:", error);
+            return null;
+        }
+    },
+    createAd: async (data: any) => {
+        try {
+            const res = await api.post(`/Admin/ads`, data);
+            return res.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || "Lỗi tạo ads",
+            };
+        }
+    },
+    updateAd: async (id: number, data: any) => {
+        try {
+            const res = await api.put(`/Admin/ads/${id}`, data);
+            return res.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || "Lỗi cập nhật ads",
+            };
+        }
+    },
+    deleteAd: async (id: number) => {
+        try {
+            const res = await api.delete(`/Admin/ads/${id}`);
+            return res.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || "Lỗi xóa ads",
+            };
+        }
+    },
+    toggleAdStatus: async (id: number) => {
+        try {
+            const res = await api.put(`/Admin/ads/${id}/toggle`);
+            return res.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message:
+                    error.response?.data?.message || "Lỗi đổi trạng thái ads",
+            };
+        }
     },
 };

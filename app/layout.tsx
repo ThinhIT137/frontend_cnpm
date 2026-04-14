@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
     title: {
-        default: "TravelMap - Khám phá khu du lịch, khách sạn, tour du lịch",
-        template: "%s | TravelMap",
+        default: "UTCTrek - Khám phá khu du lịch, khách sạn, tour du lịch",
+        template: "%s | UTCTrek",
     },
     description:
         "Khám phá khu du lịch, địa điểm du lịch, khách sạn và tour du lịch trên bản đồ. Tìm đường đi và đánh dấu vị trí du lịch yêu thích.",
@@ -32,9 +32,9 @@ export const metadata: Metadata = {
         "địa điểm du lịch",
         "travel map",
     ],
-    authors: [{ name: "TravelMap Team" }],
+    authors: [{ name: "UTCTrek Team" }],
     openGraph: {
-        title: "TravelMap - Khám phá du lịch",
+        title: "UTCTrek - Khám phá du lịch",
         description: "Tìm khu du lịch, khách sạn và tour du lịch trên bản đồ.",
         type: "website",
         locale: "vi_VN",

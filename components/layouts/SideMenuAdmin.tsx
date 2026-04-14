@@ -29,7 +29,7 @@ const SideMenuAdmin = () => {
         { title: "Báo cáo vi phạm", path: AdminReport, icon: "🚩" },
         { title: "Người dùng", path: AdminUser, icon: "👥" },
         { title: "Khu du lịch", path: AdminTouristArea, icon: "🏞️" },
-        { title: "Địa điểm du lịch45", path: AdminTouristPlace, icon: "📍" },
+        { title: "Địa điểm du lịch", path: AdminTouristPlace, icon: "📍" },
         { title: "Khách sạn", path: AdminHotel, icon: "🏨" },
         { title: "Chuyến Tour", path: AdminTour, icon: "🚌" },
         { title: "Quảng cáo (Banner)", path: AdminBanner, icon: "📢" },

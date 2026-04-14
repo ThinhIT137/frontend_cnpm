@@ -14,13 +14,13 @@ import {
 } from "lucide-react";
 import { adminApi } from "@/app/api/adminApi";
 
-// Định nghĩa chuẩn Type User dựa trên Backend của sếp
+// 1. SỬA LẠI TYPE CHO KHỚP VỚI BACKEND (Dùng status: string thay vì isActive)
 type UserItem = {
     id: string;
     name: string;
     email: string;
     role: string;
-    isActive: boolean;
+    status: string; // <-- Sửa ở đây
     createdAt: string;
 };
 
@@ -30,11 +30,11 @@ export default function AdminUserPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-    // 1. Load danh sách User
+    // Load danh sách User
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const res = await adminApi.getUsers(1, 100); // Lấy tạm 100 người demo cho sướng sếp ạ
+            const res = await adminApi.getUsers(1, 100);
             if (res?.success) {
                 setUsers(res.data?.items || []);
             }
@@ -49,15 +49,27 @@ export default function AdminUserPage() {
         fetchUsers();
     }, []);
 
-    // 2. Chức năng Khóa/Mở khóa tài khoản
-    const handleToggleStatus = async (userId: string) => {
+    // 2. SỬA LOGIC CẬP NHẬT TRẠNG THÁI STATUS
+    const handleToggleStatus = async (
+        userId: string,
+        currentStatus: string,
+    ) => {
         setUpdatingId(userId);
         try {
             const res = await adminApi.toggleUserStatus(userId);
             if (res.success) {
                 setUsers((prev) =>
                     prev.map((u) =>
-                        u.id === userId ? { ...u, isActive: !u.isActive } : u,
+                        u.id === userId
+                            ? // Nếu đang Active thì chuyển thành Locked, và ngược lại
+                              {
+                                  ...u,
+                                  status:
+                                      currentStatus === "Active"
+                                          ? "Locked"
+                                          : "Active",
+                              }
+                            : u,
                     ),
                 );
             } else {
@@ -70,7 +82,7 @@ export default function AdminUserPage() {
         }
     };
 
-    // 3. Chức năng Đổi Role
+    // Chức năng Đổi Role
     const handleChangeRole = async (userId: string, newRole: string) => {
         if (
             !window.confirm(
@@ -203,7 +215,8 @@ export default function AdminUserPage() {
                                         </div>
                                     </td>
                                     <td className="p-4">
-                                        {user.isActive ? (
+                                        {/* 3. SỬA GIAO DIỆN BADGE THEO STATUS */}
+                                        {user.status === "Active" ? (
                                             <span className="px-2.5 py-1 bg-green-50 text-green-600 text-xs font-medium rounded-full border border-green-100">
                                                 Hoạt động
                                             </span>
@@ -216,21 +229,26 @@ export default function AdminUserPage() {
                                     <td className="p-4">
                                         <div className="flex justify-center space-x-2">
                                             <button
-                                                onClick={() =>
-                                                    handleToggleStatus(user.id)
+                                                onClick={
+                                                    () =>
+                                                        handleToggleStatus(
+                                                            user.id,
+                                                            user.status,
+                                                        ) // Truyền thêm status hiện tại
                                                 }
                                                 disabled={
                                                     updatingId === user.id
                                                 }
+                                                // 4. SỬA MÀU NÚT BẤM THEO STATUS
                                                 className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                                                    user.isActive
+                                                    user.status === "Active"
                                                         ? "bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200"
                                                         : "bg-green-50 text-green-600 hover:bg-green-600 hover:text-white border border-green-200"
                                                 }`}
                                             >
                                                 {updatingId === user.id ? (
                                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                                ) : user.isActive ? (
+                                                ) : user.status === "Active" ? (
                                                     <>
                                                         <Lock className="w-4 h-4 mr-1.5" />{" "}
                                                         Khóa

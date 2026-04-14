@@ -55,7 +55,7 @@ const Header = () => {
     const { setLoading } = useLoading();
     const { isAuth, user } = useAuth();
     const pathName = usePathname();
-    const { notifications, unreadCount, setUnreadCount } =
+    const { notifications, setNotifications, unreadCount, setUnreadCount } =
         useNotification(isAuth);
 
     useEffect(() => {
@@ -94,6 +94,7 @@ const Header = () => {
     const checkPath = () => {
         if (pathName == Login) return false;
         else if (pathName == Home) return false;
+        else if (pathName == "/resetPassword") return false;
         return true;
     };
 
@@ -106,7 +107,11 @@ const Header = () => {
                 const res = await api.put(`/Notification/${notif.id}/read`);
                 if (res.data.success) {
                     setUnreadCount((prev) => Math.max(0, prev - 1));
-                    notif.isRead = true; // Cập nhật local mảng
+                    setNotifications((prev) =>
+                        prev.map((n) =>
+                            n.id === notif.id ? { ...n, isRead: true } : n,
+                        ),
+                    );
                 }
             } catch (error) {
                 console.error("Lỗi đánh dấu đã đọc:", error);
@@ -117,6 +122,17 @@ const Header = () => {
         //     router.push("/Admin/Peding"); //
         // }
     };
+
+    // const hiddenRoutes = [
+    //     Login,
+    //     "/resetPassword",
+    //     "/register",
+    //     "/forgotPassword",
+    // ];
+    // if (hiddenRoutes.includes(pathName)) {
+    //     // Nếu trang hiện tại nằm trong mảng hiddenRoutes thì không render Header
+    //     return null;
+    // }
 
     return (
         <>

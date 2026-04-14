@@ -33,6 +33,17 @@ const SearchComponent: React.FC<SearchComponentProps> = ({ onSearch }) => {
     else if (path === placedAndPrivate) return;
     else if (path === profile) return;
 
+    const hiddenRoutes = [
+        Login,
+        "/resetPassword",
+        "/register",
+        "/forgotPassword",
+    ];
+    if (hiddenRoutes.includes(path)) {
+        // Nếu trang hiện tại nằm trong mảng hiddenRoutes thì không render Header
+        return null;
+    }
+
     const [type, setType] = useState("Tour");
     const [keyword, setKeyword] = useState("");
     const [minPrice, setMinPrice] = useState(0);

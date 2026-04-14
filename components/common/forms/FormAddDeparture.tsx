@@ -90,7 +90,7 @@ export function FormAddDeparture({
     };
 
     const inputClass =
-        "w-full p-2 bg-white border border-zinc-200 rounded-lg text-sm focus:border-amber-500 outline-none";
+        "w-full p-2 bg-white border border-zinc-200 rounded-lg text-sm text-black focus:border-amber-500 outline-none";
 
     return (
         <div className="bg-amber-50/50 p-4 rounded-3xl border border-amber-100 flex flex-col gap-4">

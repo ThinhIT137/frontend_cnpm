@@ -3,8 +3,20 @@
 import { useEffect, useState } from "react";
 import { adminApi, SystemStatsProps } from "@/app/api/adminApi";
 import { useLoading } from "@/context/LoadingContext";
-import Link from "next/link"; // Dùng Link để chuyển trang
-import { useNextRouter } from "@/hooks/useNextRouter"; // Hoặc dùng hook router của sếp
+import Link from "next/link";
+import { useNextRouter } from "@/hooks/useNextRouter";
+
+// IMPORT CÁC BIẾN ĐƯỜNG DẪN TỪ ROUTER
+import {
+    AdminUser,
+    AdminPeding,
+    AdminReport,
+    AdminTouristArea,
+    AdminTouristPlace,
+    AdminHotel,
+    AdminTour,
+    AdminBanner,
+} from "@/constants/router";
 
 const AdminDashboard = () => {
     const { setLoading } = useLoading();
@@ -23,6 +35,24 @@ const AdminDashboard = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        // ==============================================
+        // 🔴 KIỂM TRA QUYỀN ADMIN TRƯỚC KHI LOAD TRANG
+        // ==============================================
+        const role = localStorage.getItem("role")?.toLowerCase();
+
+        if (role !== "admin") {
+            alert(
+                "❌ Cảnh báo: Bạn không có quyền truy cập trang quản trị này!",
+            );
+            go("/"); // Đá văng về trang chủ
+            return; // Dừng luôn, không gọi API fetchStats nữa
+        }
+
+        // Nếu đúng là Admin thì mới cho fetch dữ liệu
+        fetchStats();
+    }, []);
 
     useEffect(() => {
         fetchStats();
@@ -59,7 +89,7 @@ const AdminDashboard = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
                                 {/* Card: Đang chờ duyệt (Click để tới trang Duyệt SP) */}
                                 <Link
-                                    href="/admin/approvals"
+                                    href={AdminPeding}
                                     className="bg-white p-6 rounded-3xl shadow-sm border border-red-100 hover:shadow-md transition-all hover:-translate-y-1 flex items-center gap-5 relative overflow-hidden group cursor-pointer"
                                 >
                                     <div className="absolute right-0 top-0 w-2 h-full bg-red-500 transition-all group-hover:w-3"></div>
@@ -78,7 +108,7 @@ const AdminDashboard = () => {
 
                                 {/* Card: Report (Báo cáo vi phạm) */}
                                 <Link
-                                    href="/admin/reports"
+                                    href={AdminReport}
                                     className="bg-white p-6 rounded-3xl shadow-sm border border-amber-100 hover:shadow-md transition-all hover:-translate-y-1 flex items-center gap-5 relative overflow-hidden group cursor-pointer"
                                 >
                                     <div className="absolute right-0 top-0 w-2 h-full bg-amber-500 transition-all group-hover:w-3"></div>
@@ -95,7 +125,7 @@ const AdminDashboard = () => {
                                     </div>
                                 </Link>
 
-                                {/* Card: Feedbacks (Phản hồi) - BỔ SUNG THÊM */}
+                                {/* Card: Feedbacks (Phản hồi) */}
                                 <Link
                                     href="/admin/feedbacks"
                                     className="bg-white p-6 rounded-3xl shadow-sm border border-sky-100 hover:shadow-md transition-all hover:-translate-y-1 flex items-center gap-5 relative overflow-hidden group cursor-pointer"
@@ -122,26 +152,9 @@ const AdminDashboard = () => {
                                 Hoạt Động Hệ Thống
                             </h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
-                                {/* Card: Doanh thu */}
-                                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex items-center gap-5">
-                                    <div className="p-4 bg-green-100/80 text-green-600 rounded-2xl text-3xl">
-                                        💰
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500 font-medium mb-1">
-                                            Tổng doanh thu
-                                        </p>
-                                        <p className="text-2xl font-extrabold text-gray-800">
-                                            {formatCurrency(
-                                                stats.totalRevenue || 0,
-                                            )}
-                                        </p>
-                                    </div>
-                                </div>
-
                                 {/* Card: Người dùng */}
                                 <Link
-                                    href="/admin/users"
+                                    href={AdminUser}
                                     className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition-all hover:-translate-y-1 flex items-center gap-5 group cursor-pointer"
                                 >
                                     <div className="p-4 bg-blue-100/80 text-blue-600 rounded-2xl text-3xl transition-transform group-hover:scale-110">
@@ -159,7 +172,7 @@ const AdminDashboard = () => {
 
                                 {/* Card: Quảng cáo */}
                                 <Link
-                                    href="/admin/ads"
+                                    href={AdminBanner}
                                     className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition-all hover:-translate-y-1 flex items-center gap-5 group cursor-pointer"
                                 >
                                     <div className="p-4 bg-purple-100/80 text-purple-600 rounded-2xl text-3xl transition-transform group-hover:scale-110">
@@ -185,7 +198,7 @@ const AdminDashboard = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {/* Card: Khu du lịch */}
                                 <Link
-                                    href="/admin/tourist-areas"
+                                    href={AdminTouristArea}
                                     className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition-all hover:-translate-y-1 flex items-center gap-5 group cursor-pointer"
                                 >
                                     <div className="p-4 bg-teal-100/80 text-teal-600 rounded-2xl text-3xl transition-transform group-hover:scale-110">
@@ -203,12 +216,13 @@ const AdminDashboard = () => {
 
                                 {/* Card: Địa điểm du lịch */}
                                 <Link
-                                    href="/admin/tourist-places"
+                                    href={AdminTouristPlace}
                                     className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition-all hover:-translate-y-1 flex items-center gap-5 group cursor-pointer"
                                 >
                                     <div className="p-4 bg-pink-100/80 text-pink-600 rounded-2xl text-3xl transition-transform group-hover:scale-110">
                                         📍
                                     </div>
+
                                     <div>
                                         <p className="text-sm text-gray-500 font-medium mb-1 group-hover:text-pink-600 transition-colors">
                                             Địa điểm check-in
@@ -221,7 +235,7 @@ const AdminDashboard = () => {
 
                                 {/* Card: Khách sạn */}
                                 <Link
-                                    href="/admin/hotels"
+                                    href={AdminHotel}
                                     className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition-all hover:-translate-y-1 flex items-center gap-5 group cursor-pointer"
                                 >
                                     <div className="p-4 bg-indigo-100/80 text-indigo-600 rounded-2xl text-3xl transition-transform group-hover:scale-110">
@@ -239,7 +253,7 @@ const AdminDashboard = () => {
 
                                 {/* Card: Tour */}
                                 <Link
-                                    href="/admin/tours"
+                                    href={AdminTour}
                                     className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition-all hover:-translate-y-1 flex items-center gap-5 group cursor-pointer"
                                 >
                                     <div className="p-4 bg-orange-100/80 text-orange-600 rounded-2xl text-3xl transition-transform group-hover:scale-110">
@@ -254,24 +268,6 @@ const AdminDashboard = () => {
                                         </p>
                                     </div>
                                 </Link>
-
-                                {/* Card: Marker (Vị trí đánh dấu) */}
-                                {/* <Link
-                                    href="/admin/markers"
-                                    className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition-all hover:-translate-y-1 flex items-center gap-5 group cursor-pointer"
-                                >
-                                    <div className="p-4 bg-sky-100/80 text-sky-600 rounded-2xl text-3xl transition-transform group-hover:scale-110">
-                                        📌
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500 font-medium mb-1 group-hover:text-sky-600 transition-colors">
-                                            Vị trí đánh dấu (Marker)
-                                        </p>
-                                        <p className="text-2xl font-extrabold text-gray-800">
-                                            {stats.totalMarkers || 0}
-                                        </p>
-                                    </div>
-                                </Link> */}
                             </div>
                         </div>
                     </div>

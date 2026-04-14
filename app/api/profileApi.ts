@@ -332,7 +332,13 @@ export const profileApi = {
         const res = await api.post("/Favorite/toggle", payload);
         return res.data;
     },
-
+    getMyFavorites: (page: number, pageSize: number) => {
+        const res = api.get(
+            `/Favorite/my-favorites?page=${page}&pageSize=${pageSize}`,
+        );
+        console.log(res);
+        return res.then((response) => response.data);
+    },
     /**
      * Gửi báo cáo vi phạm
      */
@@ -385,5 +391,10 @@ export const profileApi = {
         // Gọi xuống endpoint vừa tạo ở UserController
         const res = await api.put("/User/upgrade-role", payload);
         return res.data;
+    },
+    // Thêm vào file profileApi.ts
+    cancelBooking: (id: number) => {
+        // Sửa lại đường dẫn /Booking/ cho đúng với route Controller của sếp nhé
+        return api.put(`/Booking/${id}/cancel`);
     },
 };
