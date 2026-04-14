@@ -497,17 +497,17 @@ export const adminApi = {
             return null;
         }
     },
-    createAd: async (data: any) => {
-        try {
-            const res = await api.post(`/Admin/ads`, data);
-            return res.data;
-        } catch (error: any) {
-            return {
-                success: false,
-                message: error.response?.data?.message || "Lỗi tạo ads",
-            };
-        }
-    },
+    // createAd: async (data: any) => {
+    //     try {
+    //         const res = await api.post(`/Admin/ads`, data);
+    //         return res.data;
+    //     } catch (error: any) {
+    //         return {
+    //             success: false,
+    //             message: error.response?.data?.message || "Lỗi tạo ads",
+    //         };
+    //     }
+    // },
     updateAd: async (id: number, data: any) => {
         try {
             const res = await api.put(`/Admin/ads/${id}`, data);
